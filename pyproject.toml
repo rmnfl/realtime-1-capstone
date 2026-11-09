@@ -1,0 +1,18 @@
+[project]
+name = "capstone-api"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115,<1",
+    "httpx>=0.27,<1",
+    "prometheus-client>=0.26.0",
+    "redis>=8.1.0",
+    "uvicorn>=0.30,<1",
+]
+
+[dependency-groups]
+generator = [
+    "psycopg[binary]==3.2.10",
+    "aiokafka==0.14.0",
+    "rich==14.1.0",
+]
