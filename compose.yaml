@@ -1,4 +1,4 @@
-name: ${COMPOSE_PROJECT_NAME:-realtime-order-analytics}
+name: ${COMPOSE_PROJECT_NAME:-realtime-1-capstone}
 
 x-logging: &logging
   driver: json-file

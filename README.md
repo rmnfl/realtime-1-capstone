@@ -1,4 +1,4 @@
-# Realtime Order Analytics
+# Realtime-1 Capstone
 
 Проект собирает изменения заказов, их позиций и платежей из PostgreSQL
 через Debezium и Kafka в ClickHouse. API возвращает сводки по заказам,
@@ -34,7 +34,7 @@ flowchart LR
 Код и конфигурация стенда находятся в корне репозитория:
 
 ```text
-realtime-order-analytics/
+realtime-1-capstone/
 ├── compose.yaml          # контейнеры и volumes данных
 ├── justfile              # запуск, диагностика и нагрузка
 ├── Dockerfile            # образ API
@@ -75,8 +75,8 @@ realtime-order-analytics/
 Если репозиторий уже скачан, перейдите в его каталог и пропустите `git clone`:
 
 ```sh
-git clone https://github.com/rmnfl/realtime-order-analytics.git
-cd realtime-order-analytics
+git clone https://github.com/rmnfl/realtime-1-capstone.git
+cd realtime-1-capstone
 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 lsof -nP -iTCP:55434 -iTCP:19093 -iTCP:28084 -iTCP:18133 -iTCP:18001 -iTCP:19005 -iTCP:13005 -sTCP:LISTEN
 ```
