@@ -1,0 +1,218 @@
+name: ${COMPOSE_PROJECT_NAME:-realtime-order-analytics}
+
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "5m", max-file: "2"}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    command: [postgres, -c, wal_level=logical, -c, max_replication_slots=10, -c, max_wal_senders=10]
+    environment:
+      POSTGRES_DB: capstone
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports: ["127.0.0.1:${PG_PORT:-55434}:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./src/postgres/00-init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+      - ./src/postgres/01-seed.sql:/docker-entrypoint-initdb.d/01-seed.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -h 127.0.0.1 -U user -d capstone"]
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+  kafka:
+    build:
+      context: .
+      dockerfile: monitoring/jmx/Dockerfile
+      target: kafka
+    command:
+      - /bin/bash
+      - -ec
+      - export KAFKA_OPTS='-javaagent:/opt/jmx-exporter/agent.jar=9404:/etc/jmx-exporter/kafka.yml'; exec /etc/kafka/docker/run
+    logging: *logging
+    environment:
+      CLUSTER_ID: Y2Fwc3RvbmUtbG9jYWwwMQ
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:9092,EXTERNAL://:19092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:${KAFKA_PORT:-19093}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_HEAP_OPTS: -Xms256m -Xmx512m
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_LOG_RETENTION_HOURS: -1
+    ports: ['127.0.0.1:${KAFKA_PORT:-19093}:19092']
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+      - ./monitoring/jmx/kafka.yml:/etc/jmx-exporter/kafka.yml:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          /opt/kafka/bin/kafka-topics.sh
+          --bootstrap-server kafka:9092
+          --list >/dev/null 2>&1
+      interval: 5s
+      timeout: 10s
+      retries: 30
+
+  connect:
+    build:
+      context: .
+      dockerfile: monitoring/jmx/Dockerfile
+      target: connect
+    command:
+      - /bin/bash
+      - -ec
+      - export KAFKA_OPTS='-javaagent:/opt/jmx-exporter/agent.jar=9404:/etc/jmx-exporter/connect.yml'; exec /docker-entrypoint.sh start
+    ports: ["127.0.0.1:${CONNECT_PORT:-28084}:8083"]
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: capstone-connect
+      CONFIG_STORAGE_TOPIC: capstone-config
+      OFFSET_STORAGE_TOPIC: capstone-offset
+      STATUS_STORAGE_TOPIC: capstone-status
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_FLUSH_INTERVAL_MS: 1000
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+    volumes:
+      - ./monitoring/jmx/connect.yml:/etc/jmx-exporter/connect.yml:ro
+    depends_on:
+      postgres: {condition: service_healthy}
+      kafka: {condition: service_healthy}
+    healthcheck:
+      test: [CMD-SHELL, "curl -fsS http://localhost:8083/connectors >/dev/null"]
+      interval: 3s
+      timeout: 5s
+      retries: 60
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.8
+    logging: *logging
+    environment:
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: '1'
+    ports: ['127.0.0.1:${CLICKHOUSE_HTTP_PORT:-18133}:8123']
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./monitoring/clickhouse/prometheus.xml:/etc/clickhouse-server/config.d/prometheus.xml:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          clickhouse-client
+          --user admin
+          --password "$${CLICKHOUSE_PASSWORD}"
+          --query 'SELECT 1'
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+  api:
+    build: .
+    environment:
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_DATABASE: capstone
+      CLICKHOUSE_USER: reader
+      CLICKHOUSE_PASSWORD: reader
+      REDIS_URL: redis://redis:6379/0
+    ports: ["127.0.0.1:${API_PORT:-18001}:8000"]
+    logging: *logging
+    depends_on:
+      clickhouse: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test:
+        - CMD
+        - /app/.venv/bin/python
+        - -c
+        - "import json, urllib.request; assert json.load(urllib.request.urlopen('http://127.0.0.1:8000/ping', timeout=2)) == {'status': 'ok'}"
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:8.2-alpine
+    logging: *logging
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=24h
+      - --storage.tsdb.retention.size=256MB
+    ports: ["127.0.0.1:${PROMETHEUS_PORT:-19005}:9090"]
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    logging: *logging
+    depends_on:
+      api: {condition: service_healthy}
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    environment:
+      DATA_SOURCE_NAME: postgresql://monitor:monitor@postgres:5432/capstone?sslmode=disable
+    command: [--config.file=/etc/postgres-exporter/exporter.yml, --collector.postmaster]
+    volumes:
+      - ./monitoring/postgres/exporter.yml:/etc/postgres-exporter/exporter.yml:ro
+    logging: *logging
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.97.0
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    logging: *logging
+    depends_on:
+      redis: {condition: service_healthy}
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.11.0
+    command:
+      - --kafka.server=kafka:9092
+      - --kafka.version=4.2.1
+      - --topic.filter=capstone[.]capstone[.].*
+      - --group.filter=capstone-.*-clickhouse
+    logging: *logging
+    depends_on:
+      kafka: {condition: service_healthy}
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    ports: ["127.0.0.1:${GRAFANA_PORT:-13005}:3000"]
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    logging: *logging
+    depends_on:
+      prometheus: {condition: service_started}
+
+volumes:
+  kafka-data:
+  clickhouse-data:
+  pgdata:
+  prometheus-data:
+  grafana-data:
