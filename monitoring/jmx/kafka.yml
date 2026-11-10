@@ -1,0 +1,22 @@
+lowercaseOutputName: true
+includeObjectNames:
+  - kafka.server:type=BrokerTopicMetrics,*
+  - kafka.server:type=ReplicaManager,*
+  - kafka.network:type=RequestMetrics,*
+  - kafka.controller:type=KafkaController,*
+rules:
+  - pattern: 'kafka.server<type=BrokerTopicMetrics, name=(MessagesInPerSec|BytesInPerSec|BytesOutPerSec)><>Count'
+    name: kafka_broker_$1_total
+    type: COUNTER
+  - pattern: 'kafka.server<type=ReplicaManager, name=(UnderReplicatedPartitions|OfflineReplicaCount|PartitionCount)><>Value'
+    name: kafka_broker_$1
+    type: GAUGE
+  - pattern: 'kafka.network<type=RequestMetrics, name=RequestsPerSec, request=(.+), version=(.+)><>Count'
+    name: kafka_broker_requests_total
+    labels:
+      request: '$1'
+      version: '$2'
+    type: COUNTER
+  - pattern: 'kafka.controller<type=KafkaController, name=ActiveControllerCount><>Value'
+    name: kafka_controller_active
+    type: GAUGE

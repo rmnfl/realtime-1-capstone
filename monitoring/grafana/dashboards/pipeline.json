@@ -1,0 +1,1831 @@
+{
+  "uid": "capstone-pipeline",
+  "title": "Pipeline",
+  "tags": [
+    "capstone",
+    "pipeline"
+  ],
+  "timezone": "utc",
+  "schemaVersion": 39,
+  "version": 12,
+  "refresh": "10s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Service availability",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [],
+      "description": "Availability of the six application services. UP: the service check succeeds. DOWN: the check fails. UNKNOWN: monitoring cannot determine service state. Availability does not confirm data freshness or end-to-end delivery."
+    },
+    {
+      "id": 36,
+      "type": "stat",
+      "title": "API",
+      "description": "The API process responds to HTTP requests on its built-in /metrics endpoint. UP does not guarantee that business requests or CDC delivery succeed.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "min(up{job=\"api\"}) or vector(-1)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": -1,
+          "max": 1,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "UNKNOWN",
+                  "color": "orange"
+                },
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "UNKNOWN"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "text": {
+          "valueSize": 32,
+          "titleSize": 14
+        },
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "PostgreSQL",
+      "description": "PostgreSQL accepts a connection from the monitoring role. DOWN means the database connection failed. UNKNOWN means monitoring cannot determine database availability.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "min(pg_up{job=\"postgres\"} and on(job, instance) (up{job=\"postgres\"} == 1)) or vector(-1)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": -1,
+          "max": 1,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "UNKNOWN",
+                  "color": "orange"
+                },
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "UNKNOWN"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "text": {
+          "valueSize": 32,
+          "titleSize": 14
+        },
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Kafka Connect",
+      "description": "The Connect process responds and exposes connector state from the worker. A failed or paused CDC task does not mean the worker is unavailable; check task state below. UNKNOWN means worker state could not be collected.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(count(kafka_connect_connector_status{job=\"connect\"}) > bool 0 and on() (min(up{job=\"connect\"}) == 1) and on() (min(jmx_scrape_error{job=\"connect\"}) == 0)) or (min(up{job=\"connect\"}) == 0) or vector(-1)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": -1,
+          "max": 1,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "UNKNOWN",
+                  "color": "orange"
+                },
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "UNKNOWN"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "text": {
+          "valueSize": 32,
+          "titleSize": 14
+        },
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Kafka",
+      "description": "A Kafka metadata request finds at least one broker. If metadata is unavailable and the broker process endpoint is down, the service is DOWN. UNKNOWN means broker availability cannot be determined.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "min((kafka_brokers{job=\"kafka-consumers\"} > bool 0) and on(job, instance) (up{job=\"kafka-consumers\"} == 1)) or (min(up{job=\"kafka\"}) == 0) or vector(-1)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": -1,
+          "max": 1,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "UNKNOWN",
+                  "color": "orange"
+                },
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "UNKNOWN"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "text": {
+          "valueSize": 32,
+          "titleSize": 14
+        },
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "ClickHouse",
+      "description": "ClickHouse successfully executes the pipeline_metrics SQL query using the reader account. DOWN means the SQL check failed. This does not prove that Kafka consumers are progressing.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "min(up{job=\"pipeline\"}) or vector(-1)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": -1,
+          "max": 1,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "UNKNOWN",
+                  "color": "orange"
+                },
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "UNKNOWN"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "text": {
+          "valueSize": 32,
+          "titleSize": 14
+        },
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Redis",
+      "description": "Redis responds to the exporter connection check. DOWN means Redis cannot be reached. UNKNOWN means monitoring cannot determine Redis availability.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "min(redis_up{job=\"redis\"} and on(job, instance) (up{job=\"redis\"} == 1)) or vector(-1)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": -1,
+          "max": 1,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "UNKNOWN",
+                  "color": "orange"
+                },
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "UNKNOWN"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "text": {
+          "valueSize": 32,
+          "titleSize": 14
+        },
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 8,
+      "type": "row",
+      "title": "PostgreSQL",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "PostgreSQL connection and slot activity",
+      "description": "Database connected: postgres-exporter can connect to PostgreSQL. Replication slot active: a replication client is attached. Both use 1 = yes, 0 = no; neither confirms that the client is making progress.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "pg_up",
+          "legendFormat": "Database connected",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "pg_replication_slot_slot_is_active{slot_name=\"capstone_slot\"}",
+          "legendFormat": "Replication slot active",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          },
+          "min": 0,
+          "max": 1,
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "WAL retained and awaiting confirmation",
+      "description": "Retained WAL is measured from restart_lsn and may remain nonzero after delivery catches up. Unconfirmed WAL is measured from confirmed_flush_lsn. Both values are bytes, not seconds.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "pg_replication_slots_pg_wal_lsn_diff{slot_name=\"capstone_slot\"}",
+          "legendFormat": "Retained WAL",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "clamp_min(pg_replication_slot_slot_current_wal_lsn{slot_name=\"capstone_slot\"} - pg_replication_slot_slot_confirmed_flush_lsn{slot_name=\"capstone_slot\"}, 0)",
+          "legendFormat": "Unconfirmed WAL",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "PostgreSQL connections",
+      "description": "Current connections to the capstone database, including application, replication and monitoring connections.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "pg_stat_database_numbackends{datname=\"capstone\"}",
+          "legendFormat": "{{datname}}",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "PostgreSQL transactions / sec",
+      "description": "Committed and rolled-back transactions in capstone, including monitoring queries. These are rates, not total transaction counts.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 13,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(pg_stat_database_xact_commit{datname=\"capstone\"}[1m])",
+          "legendFormat": "Commits",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "rate(pg_stat_database_xact_rollback{datname=\"capstone\"}[1m])",
+          "legendFormat": "Rollbacks",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "row",
+      "title": "Debezium / Kafka Connect",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Connector and task status",
+      "description": "Each series represents one state: 1 means the connector or task is in that state, 0 means it is not. RUNNING alone does not confirm delivery progress.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_connect_connector_status",
+          "legendFormat": "Connector {{connector}} · {{status}}",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_connect_task_status",
+          "legendFormat": "Task {{connector}}/{{task}} · {{status}}",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          },
+          "min": 0,
+          "max": 1,
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "CDC events and Kafka writes / sec",
+      "description": "Debezium events observed in streaming mode and source records written by Connect to Kafka. These measure different stages; counters reset on restart and rate() accounts for resets.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 21,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(debezium_postgres_totalnumberofeventsseen_total{context=\"streaming\"}[1m])",
+          "legendFormat": "Debezium events",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "rate(kafka_connect_source_record_write_total[1m])",
+          "legendFormat": "Connect writes to Kafka",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Debezium queued events",
+      "description": "Number of events occupying the connector queue: total capacity minus remaining capacity. This is an event count, not a percentage.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "debezium_postgres_queuetotalcapacity{context=\"streaming\"} - debezium_postgres_queueremainingcapacity{context=\"streaming\"}",
+          "legendFormat": "Queued events · {{server}}",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisLabel": "Events"
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Debezium delay · last processed event",
+      "description": "Source-to-processing delay reported by Debezium for its last processed event. -1 means no measurement and is excluded. The value can stay unchanged while delivery is stalled; it is not the age of the latest data or end-to-end API freshness.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 28,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(debezium_postgres_millisecondsbehindsource{context=\"streaming\"} >= 0) / 1000",
+          "legendFormat": "Last event delay · {{server}}",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "Connect and Debezium errors / sec",
+      "description": "Rates of record-processing errors and failures. These are new errors per second, not accumulated totals.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 24,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(kafka_connect_total_record_errors_total[1m])",
+          "legendFormat": "Record errors",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "rate(kafka_connect_total_record_failures_total[1m])",
+          "legendFormat": "Record failures",
+          "range": true
+        },
+        {
+          "refId": "C",
+          "expr": "rate(debezium_postgres_numberoferroneousevents_total{context=\"streaming\"}[1m])",
+          "legendFormat": "Debezium errors",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 19,
+      "type": "row",
+      "title": "Kafka",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "Kafka incoming records / sec",
+      "description": "Records received by the broker across all topics, including internal Connect topics. This is not a count of unique business events.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 43,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(kafka_broker_messagesinpersec_total[1m])",
+          "legendFormat": "Incoming records",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Kafka network traffic",
+      "description": "Broker bytes received and sent per second.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 43,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(kafka_broker_bytesinpersec_total[1m])",
+          "legendFormat": "Received",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "rate(kafka_broker_bytesoutpersec_total[1m])",
+          "legendFormat": "Sent",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Kafka backlog · ClickHouse consumers",
+      "description": "Kafka records between partition end offsets and committed consumer offsets, summed per topic and group. An uncommitted offset (-1) is treated as zero. Values are record counts, not seconds. Zero lag does not confirm API freshness or completeness of upstream delivery. ClickHouseConsumerLag fires when group/topic lag stays above zero for 30 seconds.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (consumergroup, topic) (clamp_min(kafka_topic_partition_current_offset{job=\"kafka-consumers\"} - on (instance, topic, partition) group_right clamp_min(kafka_consumergroup_current_offset{job=\"kafka-consumers\"}, 0), 0))",
+          "legendFormat": "{{topic}} · {{consumergroup}}",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisLabel": "Records"
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 23,
+      "type": "timeseries",
+      "title": "Kafka controller and replica state",
+      "description": "Single-broker expectations: 0 under-replicated partitions, 0 offline replicas and 1 active controller. This does not confirm that downstream consumers are progressing.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 50,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_broker_underreplicatedpartitions",
+          "legendFormat": "Under-replicated partitions",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_broker_offlinereplicacount",
+          "legendFormat": "Offline replicas",
+          "range": true
+        },
+        {
+          "refId": "C",
+          "expr": "kafka_controller_active",
+          "legendFormat": "Active controller",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 24,
+      "type": "row",
+      "title": "ClickHouse",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 57,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 25,
+      "type": "timeseries",
+      "title": "ClickHouse tracked memory",
+      "description": "Memory tracked by ClickHouse. This is not the full container RSS or a percentage of the container memory limit.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 58,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "ClickHouseMetrics_MemoryTracking",
+          "legendFormat": "Tracked memory",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 26,
+      "type": "timeseries",
+      "title": "ClickHouse queries and failures / sec",
+      "description": "All ClickHouse queries per second, including health checks, monitoring and API requests; failures are shown separately.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 58,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(ClickHouseProfileEvents_Query[1m])",
+          "legendFormat": "Queries",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "rate(ClickHouseProfileEvents_FailedQuery[1m])",
+          "legendFormat": "Failed queries",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 27,
+      "type": "timeseries",
+      "title": "ClickHouse Kafka reads / sec",
+      "description": "Kafka records read per second by ClickHouse Kafka engines. Retries and non-business records can differ from unique business changes.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 65,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(ClickHouseProfileEvents_KafkaMessagesRead[1m])",
+          "legendFormat": "Records read",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 28,
+      "type": "timeseries",
+      "title": "ClickHouse Kafka errors / sec",
+      "description": "Rates of consumer errors, failed messages and offset commit failures. Temporary errors may occur during a broker outage; verify that ingestion and lag recover.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 65,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(ClickHouseProfileEvents_KafkaConsumerErrors[1m])",
+          "legendFormat": "Consumer errors",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "rate(ClickHouseProfileEvents_KafkaMessagesFailed[1m])",
+          "legendFormat": "Failed messages",
+          "range": true
+        },
+        {
+          "refId": "C",
+          "expr": "rate(ClickHouseProfileEvents_KafkaCommitFailures[1m])",
+          "legendFormat": "Offset commit failures",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 29,
+      "type": "timeseries",
+      "title": "ClickHouse Kafka consumers and partitions",
+      "description": "Consumers currently holding assignments and total assigned partitions. The configured setup expects 3 consumers and 6 partitions. Assignment alone does not confirm forward progress.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 72,
+        "w": 24,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "ClickHouseMetrics_KafkaConsumersWithAssignment",
+          "legendFormat": "Consumers with assignments",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "ClickHouseMetrics_KafkaAssignedPartitions",
+          "legendFormat": "Assigned partitions",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisLabel": "Count"
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Redis",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 79,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 31,
+      "type": "timeseries",
+      "title": "Redis connection and clients",
+      "description": "Left axis: Redis connectivity, 1 = reachable, 0 = unreachable. Right axis: connected client count. UNKNOWN in the service tile means monitoring cannot determine availability.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 80,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_up",
+          "legendFormat": "Redis reachable",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "redis_connected_clients",
+          "legendFormat": "Connected clients",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Redis reachable"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "left"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Connected (0 / 1)"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 1
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Connected clients"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Clients"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "Redis memory usage",
+      "description": "Memory allocated by Redis, in bytes. This is not a percentage of maxmemory or total container RSS.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 80,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_memory_used_bytes",
+          "legendFormat": "Used memory",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 33,
+      "type": "timeseries",
+      "title": "Redis commands / sec",
+      "description": "Redis commands processed per second, including exporter requests and internal commands.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 87,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(redis_commands_processed_total[1m])",
+          "legendFormat": "Commands",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 34,
+      "type": "timeseries",
+      "title": "Redis key lookups / sec",
+      "description": "Redis server keyspace hits and misses. These differ from API cache statistics: refresh=true bypasses the Redis read, and other clients may also perform lookups.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 87,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(redis_keyspace_hits_total[1m])",
+          "legendFormat": "Keyspace hits",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "rate(redis_keyspace_misses_total[1m])",
+          "legendFormat": "Keyspace misses",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 35,
+      "type": "timeseries",
+      "title": "Redis key expiration and eviction / sec",
+      "description": "Expired: keys removed after TTL. Evicted: keys removed because of memory pressure. These are separate reasons for removal, shown as rates.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 94,
+        "w": 24,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(redis_expired_keys_total[1m])",
+          "legendFormat": "Expired keys",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "rate(redis_evicted_keys_total[1m])",
+          "legendFormat": "Evicted keys",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 8,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    }
+  ],
+  "editable": true,
+  "description": "Metrics endpoint availability and pipeline diagnostics. Scrape success and RUNNING states do not guarantee data freshness."
+}

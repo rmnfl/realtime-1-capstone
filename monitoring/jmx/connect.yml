@@ -1,0 +1,60 @@
+lowercaseOutputName: true
+includeObjectNames:
+  - kafka.connect:type=connector-metrics,*
+  - kafka.connect:type=connector-task-metrics,*
+  - kafka.connect:type=source-task-metrics,*
+  - kafka.connect:type=task-error-metrics,*
+  - kafka.connect:type=connect-metrics,*
+  - debezium.postgres:type=connector-metrics,*
+rules:
+  - pattern: 'kafka.connect<type=connector-metrics, connector=(.+)><>status: (.+)'
+    name: kafka_connect_connector_status
+    labels:
+      connector: '$1'
+      status: '$2'
+    value: 1
+    type: GAUGE
+  - pattern: 'kafka.connect<type=connector-task-metrics, connector=(.+), task=(.+)><>status: (.+)'
+    name: kafka_connect_task_status
+    labels:
+      connector: '$1'
+      task: '$2'
+      status: '$3'
+    value: 1
+    type: GAUGE
+  - pattern: 'kafka.connect<type=source-task-metrics, connector=(.+), task=(.+)><>(source-record-poll-total|source-record-write-total)'
+    name: kafka_connect_$3
+    labels:
+      connector: '$1'
+      task: '$2'
+    type: COUNTER
+  - pattern: 'kafka.connect<type=task-error-metrics, connector=(.+), task=(.+)><>(total-record-errors|total-record-failures)'
+    name: kafka_connect_$3
+    labels:
+      connector: '$1'
+      task: '$2'
+    type: COUNTER
+  - pattern: 'kafka.connect<type=connect-metrics, client-id=(.+)><>(incoming-byte-rate|outgoing-byte-rate)'
+    name: kafka_connect_$2
+    labels:
+      client: '$1'
+    type: GAUGE
+  - pattern: 'debezium.postgres<type=connector-metrics, context=(.+), server=(.+), key=(.+)><>RowsScanned'
+    name: debezium_postgres_rowsscanned
+    labels:
+      context: '$1'
+      server: '$2'
+      table: '$3'
+    type: GAUGE
+  - pattern: 'debezium.postgres<type=connector-metrics, context=(.+), server=(.+)><>(Connected|MilliSecondsBehindSource|MilliSecondsSinceLastEvent|QueueRemainingCapacity|QueueTotalCapacity|TotalTableCount|RemainingTableCount|SnapshotRunning|SnapshotCompleted|SnapshotAborted)'
+    name: debezium_postgres_$3
+    labels:
+      context: '$1'
+      server: '$2'
+    type: GAUGE
+  - pattern: 'debezium.postgres<type=connector-metrics, context=(.+), server=(.+)><>(TotalNumberOfEventsSeen|NumberOfEventsFiltered|NumberOfErroneousEvents)'
+    name: debezium_postgres_$3_total
+    labels:
+      context: '$1'
+      server: '$2'
+    type: COUNTER

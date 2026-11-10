@@ -1,0 +1,2109 @@
+{
+  "uid": "capstone-api",
+  "title": "API",
+  "schemaVersion": 39,
+  "version": 13,
+  "editable": true,
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 18,
+      "title": "Alert rules · service-wide · not affected by endpoint filter",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "description": "",
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 19,
+      "title": "API unreachable",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 3
+      },
+      "description": "Prometheus rule: ApiUnavailable. Clear means the rule is neither pending nor firing; it does not prove end-to-end correctness.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(2 * max(ALERTS{alertname=\"ApiUnavailable\",alertstate=\"firing\"})) or max(ALERTS{alertname=\"ApiUnavailable\",alertstate=\"pending\"}) or vector(0)",
+          "legendFormat": "ApiUnavailable",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Clear",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "Pending",
+                  "color": "yellow"
+                },
+                "2": {
+                  "text": "Firing",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 34
+        }
+      }
+    },
+    {
+      "id": 20,
+      "title": "High endpoint error ratio",
+      "type": "stat",
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 3
+      },
+      "description": "Prometheus rule: ApiErrors. Clear means the rule is neither pending nor firing; it does not prove end-to-end correctness.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(2 * max(ALERTS{alertname=\"ApiErrors\",alertstate=\"firing\"})) or max(ALERTS{alertname=\"ApiErrors\",alertstate=\"pending\"}) or vector(0)",
+          "legendFormat": "ApiErrors",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Clear",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "Pending",
+                  "color": "yellow"
+                },
+                "2": {
+                  "text": "Firing",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 34
+        }
+      }
+    },
+    {
+      "id": 21,
+      "title": "Redis operation failures",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 3
+      },
+      "description": "Prometheus rule: RedisErrors. Clear means the rule is neither pending nor firing; it does not prove end-to-end correctness.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(2 * max(ALERTS{alertname=\"RedisErrors\",alertstate=\"firing\"})) or max(ALERTS{alertname=\"RedisErrors\",alertstate=\"pending\"}) or vector(0)",
+          "legendFormat": "RedisErrors",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Clear",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "Pending",
+                  "color": "yellow"
+                },
+                "2": {
+                  "text": "Firing",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 34
+        }
+      }
+    },
+    {
+      "id": 30,
+      "title": "ClickHouse consumer lag",
+      "type": "stat",
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 3
+      },
+      "description": "ClickHouseConsumerLag: a ClickHouse consumer group has topic lag above zero for 30 seconds. This rule covers the whole pipeline and is independent of the Endpoint filter.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(2 * max(ALERTS{alertname=\"ClickHouseConsumerLag\",alertstate=\"firing\"})) or max(ALERTS{alertname=\"ClickHouseConsumerLag\",alertstate=\"pending\"}) or vector(0)",
+          "legendFormat": "ClickHouseConsumerLag",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Clear",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "Pending",
+                  "color": "yellow"
+                },
+                "2": {
+                  "text": "Firing",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 34
+        }
+      }
+    },
+    {
+      "id": 1,
+      "title": "",
+      "type": "text",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 2
+      },
+      "description": "",
+      "options": {
+        "mode": "markdown",
+        "content": "**API overview** · Rates and latency use a rolling 1-minute window. Select an endpoint to investigate; cache and alert rules always cover the whole service. No traffic means latency and error ratio are undefined."
+      }
+    },
+    {
+      "id": 2,
+      "title": "API reachable",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 6,
+        "h": 4
+      },
+      "description": "Prometheus can scrape the API. This is not an end-to-end data freshness check.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{job=\"api\"}",
+          "legendFormat": "API",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "noValue": "Unknown",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 34
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Request rate",
+      "type": "stat",
+      "gridPos": {
+        "x": 6,
+        "y": 6,
+        "w": 6,
+        "h": 4
+      },
+      "description": "Selected endpoints, over the last minute.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m]))",
+          "legendFormat": "Request rate",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 34
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Server error ratio · 5xx",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 6,
+        "h": 4
+      },
+      "description": "Selected endpoints, over the last minute.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\",status=~\"5..\"}[1m])) or (0 * sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m])))) / (sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m])) > 0)",
+          "legendFormat": "Server errors · 5xx",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "thresholds"
+          },
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1e-06
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "No traffic",
+                  "color": "text"
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No traffic",
+                  "color": "text"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 34
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Response latency · p95",
+      "type": "stat",
+      "gridPos": {
+        "x": 18,
+        "y": 6,
+        "w": 6,
+        "h": 4
+      },
+      "description": "Selected endpoints, over the last minute.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(capstone_http_duration_seconds_bucket{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m])))",
+          "legendFormat": "Response latency · p95",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "No traffic",
+                  "color": "text"
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No traffic",
+                  "color": "text"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 34
+        }
+      }
+    },
+    {
+      "id": 22,
+      "title": "Data delivery · all tables · independent of Endpoint filter",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 24,
+        "h": 1
+      },
+      "description": "",
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 23,
+      "title": "",
+      "type": "text",
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 24,
+        "h": 2
+      },
+      "description": "",
+      "options": {
+        "mode": "markdown",
+        "content": "**Delivery latency** · Mean and p95 of streaming deliveries received in the last 5 minutes, including retries. Snapshots and missing or out-of-order timestamps are excluded. ClickHouse time is measured inside the ingestion MV; API visibility and cache delay are measured separately. These graphs do not include events still waiting upstream."
+      }
+    },
+    {
+      "id": 24,
+      "title": "Delivery metrics reachable",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 8,
+        "h": 3
+      },
+      "description": "Prometheus can query the ClickHouse delivery metrics view. This is independent of the API process.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{job=\"pipeline\"}",
+          "legendFormat": "Pipeline",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "noValue": "Unknown",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 34
+        }
+      }
+    },
+    {
+      "id": 25,
+      "title": "Deliveries · last 5 min",
+      "type": "stat",
+      "gridPos": {
+        "x": 8,
+        "y": 13,
+        "w": 8,
+        "h": 3
+      },
+      "description": "All streaming deliveries received in raw, including retries; snapshot excluded. A zero count means no deliveries observed in this window, not proof of an idle source.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(capstone_pipeline_deliveries_5m{job=\"pipeline\"})",
+          "legendFormat": "Deliveries",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "noValue": "No data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "mappings": [],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 34
+        }
+      }
+    },
+    {
+      "id": 26,
+      "title": "Excluded latency samples · last 5 min",
+      "type": "stat",
+      "gridPos": {
+        "x": 16,
+        "y": 13,
+        "w": 8,
+        "h": 3
+      },
+      "description": "Missing timestamps or negative stage delays. Nonzero values require checking metadata and clock synchronization.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(capstone_pipeline_invalid_deliveries_5m{job=\"pipeline\"})",
+          "legendFormat": "Deliveries",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "noValue": "No data",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 34
+        }
+      }
+    },
+    {
+      "id": 27,
+      "title": "Source → Debezium",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 8,
+        "h": 7
+      },
+      "description": "Rolling 5-minute mean and p95 for each source table, in seconds. Missing lines mean no valid samples. These are delivery gauges; do not apply rate() or average p95 across tables.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "capstone_pipeline_delivery_delay_seconds{job=\"pipeline\",stage=\"source_to_debezium\"}",
+          "legendFormat": "{{table}} · {{statistic}}",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "noValue": "No deliveries",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisBorderShow": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^orders · .*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^order_items · .*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^payments · .*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* · mean$"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    5,
+                    5
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 28,
+      "title": "Debezium → ClickHouse",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 8,
+        "y": 16,
+        "w": 8,
+        "h": 7
+      },
+      "description": "Rolling 5-minute mean and p95 for each source table, in seconds. Missing lines mean no valid samples. These are delivery gauges; do not apply rate() or average p95 across tables.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "capstone_pipeline_delivery_delay_seconds{job=\"pipeline\",stage=\"debezium_to_clickhouse\"}",
+          "legendFormat": "{{table}} · {{statistic}}",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "noValue": "No deliveries",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisBorderShow": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^orders · .*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^order_items · .*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^payments · .*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* · mean$"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    5,
+                    5
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 29,
+      "title": "Source → ClickHouse",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 16,
+        "y": 16,
+        "w": 8,
+        "h": 7
+      },
+      "description": "Rolling 5-minute mean and p95 for each source table, in seconds. Missing lines mean no valid samples. These are delivery gauges; do not apply rate() or average p95 across tables.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "capstone_pipeline_delivery_delay_seconds{job=\"pipeline\",stage=\"source_to_clickhouse\"}",
+          "legendFormat": "{{table}} · {{statistic}}",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "noValue": "No deliveries",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisBorderShow": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^orders · .*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^order_items · .*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^payments · .*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* · mean$"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    5,
+                    5
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Traffic and errors",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 24,
+        "h": 1
+      },
+      "description": "",
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 7,
+      "title": "Requests by endpoint",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 7
+      },
+      "description": "Selected business endpoints. Health checks and metric scrapes are excluded.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (endpoint) (label_replace(sum by (route) (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m])), \"endpoint\", \"$1\", \"route\", \".*/metrics/(.*)\"))",
+          "legendFormat": "{{endpoint}}",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisBorderShow": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "HTTP responses",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 7
+      },
+      "description": "2xx: success. 3xx: redirect. 4xx: invalid or rejected request. 5xx: server failure.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\",status=~\"2..\"}[1m])) or (0 * sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m]))))",
+          "legendFormat": "2xx",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "(sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\",status=~\"3..\"}[1m])) or (0 * sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m]))))",
+          "legendFormat": "3xx",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "C",
+          "expr": "(sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\",status=~\"4..\"}[1m])) or (0 * sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m]))))",
+          "legendFormat": "4xx",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "D",
+          "expr": "(sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\",status=~\"5..\"}[1m])) or (0 * sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m]))))",
+          "legendFormat": "5xx",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisBorderShow": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "2xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "3xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "4xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Response time and reliability",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 24,
+        "h": 1
+      },
+      "description": "",
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 10,
+      "title": "Response latency · p50 / p95 / p99",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 7
+      },
+      "description": "Estimated histogram percentiles for all selected requests, including failures. p50: median; p95/p99: slower tail. No requests means no estimate.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(capstone_http_duration_seconds_bucket{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m])))",
+          "legendFormat": "p50",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(capstone_http_duration_seconds_bucket{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m])))",
+          "legendFormat": "p95",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "C",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(capstone_http_duration_seconds_bucket{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m])))",
+          "legendFormat": "p99",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisBorderShow": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p50"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p99"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Server error ratio · 5xx",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 7
+      },
+      "description": "Server failures divided by all requests. Gaps mean no traffic, not 0% errors.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\",status=~\"5..\"}[1m])) or (0 * sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m])))) / (sum (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m])) > 0)",
+          "legendFormat": "5xx share",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisBorderShow": false
+          },
+          "max": 1
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5xx share"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Endpoint comparison · current 1-minute window",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 24,
+        "h": 1
+      },
+      "description": "",
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 13,
+      "title": "Endpoints",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 24,
+        "h": 7
+      },
+      "description": "Instant snapshot for the selected endpoints. Latency is estimated from histogram buckets. A blank latency or error ratio means no requests in the last minute.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (endpoint) (label_replace(sum by (route) (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m])), \"endpoint\", \"$1\", \"route\", \".*/metrics/(.*)\"))",
+          "legendFormat": "",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (endpoint) (label_replace((sum by (route) (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\",status=~\"5..\"}[1m])) or (0 * sum by (route) (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m])))) / (sum by (route) (rate(capstone_http_requests_total{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m]))), \"endpoint\", \"$1\", \"route\", \".*/metrics/(.*)\"))",
+          "legendFormat": "",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "C",
+          "expr": "sum by (endpoint) (label_replace(histogram_quantile(0.5, sum by (route, le) (rate(capstone_http_duration_seconds_bucket{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m]))), \"endpoint\", \"$1\", \"route\", \".*/metrics/(.*)\"))",
+          "legendFormat": "",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "D",
+          "expr": "sum by (endpoint) (label_replace(histogram_quantile(0.95, sum by (route, le) (rate(capstone_http_duration_seconds_bucket{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m]))), \"endpoint\", \"$1\", \"route\", \".*/metrics/(.*)\"))",
+          "legendFormat": "",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "E",
+          "expr": "sum by (endpoint) (label_replace(histogram_quantile(0.99, sum by (route, le) (rate(capstone_http_duration_seconds_bucket{job=\"api\",route=~\"/v1/datasets/.+/metrics/${endpoint:raw}\"}[1m]))), \"endpoint\", \"$1\", \"route\", \".*/metrics/(.*)\"))",
+          "legendFormat": "",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "noValue": "—",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "—",
+                  "color": "text"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Requests / sec"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "reqps"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5xx share"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p50"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p99"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "Requests / sec",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "endpoint",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "endpoint": 0,
+              "Value #A": 1,
+              "Value #B": 2,
+              "Value #C": 3,
+              "Value #D": 4,
+              "Value #E": 5
+            },
+            "renameByName": {
+              "endpoint": "Endpoint",
+              "Value #A": "Requests / sec",
+              "Value #B": "5xx share",
+              "Value #C": "p50",
+              "Value #D": "p95",
+              "Value #E": "p99"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Cache · all three summary endpoints · not affected by endpoint filter",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 47,
+        "w": 24,
+        "h": 1
+      },
+      "description": "",
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 15,
+      "title": "Cache hit ratio",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 48,
+        "w": 8,
+        "h": 7
+      },
+      "description": "Hits / (hits + misses). Summary endpoints only; timeseries endpoints do not use the cache. No cache traffic means no ratio.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(capstone_cache_requests_total{job=\"api\",result=\"hit\"}[1m])) / (sum(rate(capstone_cache_requests_total{job=\"api\"}[1m])) > 0)",
+          "legendFormat": "Hit ratio",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisBorderShow": false
+          },
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "title": "Cache requests",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 8,
+        "y": 48,
+        "w": 8,
+        "h": 7
+      },
+      "description": "Combined hits and misses. refresh=true bypasses cache reads and is counted as a miss. Cache TTL: 30 seconds.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (result) (rate(capstone_cache_requests_total{job=\"api\"}[1m]))",
+          "legendFormat": "{{result}}",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisBorderShow": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hit"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "miss"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "title": "Redis operation errors",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 16,
+        "y": 48,
+        "w": 8,
+        "h": 7
+      },
+      "description": "Failed Redis reads and writes. One request can fail both operations. The API falls back to ClickHouse. Zero is shown when cache metrics exist and no errors have been observed.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "capstone-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(capstone_redis_errors_total{job=\"api\"}[1m])) or (0 * sum(rate(capstone_cache_requests_total{job=\"api\"}[1m])))",
+          "legendFormat": "Errors",
+          "editorMode": "code",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "noValue": "No traffic",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisBorderShow": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Errors"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    }
+  ],
+  "tags": [
+    "capstone",
+    "api"
+  ],
+  "description": "API request rate, errors and duration, with endpoint drill-down and service-wide cache diagnostics.",
+  "templating": {
+    "list": [
+      {
+        "name": "endpoint",
+        "label": "Endpoint",
+        "type": "custom",
+        "query": "orders/summary,campaigns/summary,products/summary,orders/timeseries,payments/timeseries",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": false,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": [
+          {
+            "text": "All",
+            "value": "$__all",
+            "selected": true
+          },
+          {
+            "text": "orders/summary",
+            "value": "orders/summary",
+            "selected": false
+          },
+          {
+            "text": "campaigns/summary",
+            "value": "campaigns/summary",
+            "selected": false
+          },
+          {
+            "text": "products/summary",
+            "value": "products/summary",
+            "selected": false
+          },
+          {
+            "text": "orders/timeseries",
+            "value": "orders/timeseries",
+            "selected": false
+          },
+          {
+            "text": "payments/timeseries",
+            "value": "payments/timeseries",
+            "selected": false
+          }
+        ]
+      }
+    ]
+  }
+}

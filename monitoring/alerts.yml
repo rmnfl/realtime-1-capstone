@@ -1,0 +1,96 @@
+groups:
+  - name: capstone
+    rules:
+      - alert: ApiUnavailable
+        expr: up{job="api"} == 0
+        for: 10s
+        annotations:
+          summary: Prometheus cannot scrape API metrics
+          description: Check the API service, its logs and the Prometheus target.
+
+      - alert: ApiErrors
+        expr: |
+              sum by (route) (
+                rate(capstone_http_requests_total{
+                  job="api", route=~"/v1/datasets/.+/metrics/.+",
+                  status=~"5.."
+                }[30s])
+              ) /
+              sum by (route) (
+                rate(capstone_http_requests_total{
+                  job="api", route=~"/v1/datasets/.+/metrics/.+"
+                }[30s])
+              ) > 0.5
+        for: 10s
+        annotations:
+          summary: 'More than half of requests return 5xx on {{ $labels.route }}'
+          description: Check ClickHouse availability and API logs for the affected endpoint.
+
+      - alert: RedisErrors
+        expr: |
+              sum(
+                rate(capstone_redis_errors_total[30s])
+              ) > 0
+        for: 10s
+        annotations:
+          summary: Redis cache operations are failing
+          description: Check Redis availability and API cache logs.
+
+      - alert: PipelineMetricsUnavailable
+        expr: up{job=~"postgres|connect|kafka|kafka-consumers|clickhouse|redis|pipeline"} == 0
+        for: 30s
+        annotations:
+          summary: 'Metrics endpoint unavailable for {{ $labels.job }}'
+          description: Check the service or exporter, its logs and the Prometheus target.
+
+      - alert: PostgresUnavailable
+        expr: pg_up == 0
+        for: 10s
+        annotations:
+          summary: Exporter cannot connect to PostgreSQL
+          description: Check PostgreSQL, the monitor role and postgres-exporter logs.
+
+      - alert: RedisUnavailable
+        expr: redis_up == 0
+        for: 10s
+        annotations:
+          summary: Exporter cannot connect to Redis
+          description: Check Redis and redis-exporter logs.
+
+      - alert: CdcTaskNotRunning
+        expr: |
+          kafka_connect_task_status{connector="capstone-cdc",task="0",status="running"} != 1
+          or absent(kafka_connect_task_status{connector="capstone-cdc",task="0",status="running"})
+        for: 30s
+        annotations:
+          summary: CDC task is not running
+          description: Check /connectors/capstone-cdc/status and Connect logs.
+
+      - alert: PipelineMetricsCollectionFailed
+        expr: |
+          pg_exporter_last_scrape_error{job="postgres"} > 0
+          or pg_scrape_collector_success{job="postgres"} == 0
+          or jmx_scrape_error{job=~"kafka|connect"} > 0
+        for: 30s
+        annotations:
+          summary: 'Internal metrics collection failed for {{ $labels.job }}'
+          description: The endpoint responds, but internal metrics collection failed. Check exporter logs and permissions.
+
+      - alert: ClickHouseConsumerLag
+        expr: |
+          sum by (consumergroup, topic) (
+            clamp_min(
+              kafka_topic_partition_current_offset{job="kafka-consumers"}
+              - on (instance, topic, partition) group_right
+              clamp_min(kafka_consumergroup_current_offset{
+                job="kafka-consumers",
+                consumergroup=~"capstone-(orders|order-items|payments)-clickhouse",
+                topic=~"capstone[.]capstone[.](orders|order_items|payments)"
+              }, 0),
+              0
+            )
+          ) > 0
+        for: 30s
+        annotations:
+          summary: 'Persistent ClickHouse consumer lag on {{ $labels.topic }}'
+          description: 'Consumer group {{ $labels.consumergroup }} has committed offsets {{ printf "%.0f" $value }} records behind the topic end offsets for more than 30 seconds. Check ClickHouse Kafka consumers, ingestion materialized views and server logs. After recovery, verify the expected API result.'
