@@ -26,7 +26,8 @@ def generate_events(args, totals):
     rng = random.Random(args.seed)
     anchor = datetime.fromisoformat(args.start_date).replace(tzinfo=UTC)
     sequence = 0
-    run_id = f"{args.dataset}_{args.start_id}" if args.start_id else args.dataset
+    # Kafka: synthetic positions must not be mixed with WAL events for the same keys.
+    lsn_base = time.time_ns()
     deadline = time.monotonic() + args.duration if args.duration is not None else None
 
     def build_event(table, op, before, after):
@@ -34,7 +35,8 @@ def generate_events(args, totals):
         sequence += 1
         row = after if after is not None else before
         return {
-            "event_id": f"{run_id}_{sequence}",
+            "source_lsn": lsn_base + sequence,
+            "source_ts_ms": time.time_ns() // 1_000_000,
             "table": table,
             "op": op,
             "key": {"dataset_id": args.dataset, "id": row["id"]},
@@ -201,9 +203,18 @@ class Postgres:
 
 def build_kafka_value(event):
     return {
-        "event_id": event["event_id"],
+        "before": event["before"],
+        "after": event["after"],
+        "source": {
+            "name": "generator",
+            "schema": "capstone",
+            "table": event["table"],
+            "snapshot": "false",
+            "lsn": event["source_lsn"],
+            "ts_ms": event["source_ts_ms"],
+        },
         "op": event["op"],
-        "data": event["key"] if event["op"] == "d" else event["after"],
+        "ts_ms": time.time_ns() // 1_000_000,
     }
 
 
@@ -260,7 +271,7 @@ def parse_args(argv=None):
             "Просмотр событий: just data-load --orders 3 --dry-run. "
             "Запуск нагрузки: just data-load --orders 10000 --rate 1000. "
             "Для нового прогона используйте новый датасет. "
-            "Kafka-режим использует отдельный формат событий, несовместимый с CDC-входом ClickHouse."
+            "Kafka mode sends compatible Debezium envelopes directly to CDC topics; PostgreSQL is unchanged."
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
@@ -360,7 +371,7 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         "--topic-prefix",
-        default="capstone",
+        default="capstone.capstone",
         help="Префикс топиков: <prefix>.orders, .order_items, .payments",
     )
     parser.add_argument(
@@ -393,8 +404,8 @@ def parse_args(argv=None):
         anchor + timedelta(days=args.days + 1)
     except (ValueError, OverflowError):
         parser.error("Неверная дата или слишком большой --days")
-    if not re.fullmatch(r"[a-zA-Z0-9_-]{1,200}", args.topic_prefix):
-        parser.error("--topic-prefix: 1–200 символов a-z, A-Z, 0-9, _ и -")
+    if not re.fullmatch(r"[a-zA-Z0-9_.-]{1,200}", args.topic_prefix):
+        parser.error("--topic-prefix: 1–200 characters from a-z, A-Z, 0-9, _, . and -")
     if args.target == "postgres" and args.duplicate_rate:
         parser.error(
             "--duplicate-rate применим только к Kafka: повторный UPDATE не является повторной доставкой"
