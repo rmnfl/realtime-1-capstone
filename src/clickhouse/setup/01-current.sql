@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
--- orders — заказы
+-- orders
 -- -----------------------------------------------------------------------------
 
--- Заказы: выбираем максимальную бизнес-версию, включая состояние удаления.
+-- Orders: keep the highest business version, including deleted rows.
 CREATE TABLE IF NOT EXISTS capstone.orders_current (
     dataset_id   String,
     id           String,
@@ -38,10 +38,10 @@ SELECT *
 FROM capstone.orders_current FINAL;
 
 -- -----------------------------------------------------------------------------
--- order_items — позиции заказов
+-- order_items
 -- -----------------------------------------------------------------------------
 
--- Позиции: выбираем состояние по позиции в WAL.
+-- Items: select the latest state by WAL position.
 CREATE TABLE IF NOT EXISTS capstone.order_items_current (
     dataset_id       String,
     id               String,
@@ -73,10 +73,10 @@ SELECT *
 FROM capstone.order_items_current FINAL;
 
 -- -----------------------------------------------------------------------------
--- payments — оплаты и возвраты
+-- payments
 -- -----------------------------------------------------------------------------
 
--- Платежи неизменяемы: повтор одного ключа содержит тот же бизнес-факт.
+-- Payments are immutable: duplicate keys must contain the same business fields.
 CREATE TABLE IF NOT EXISTS capstone.payments_current (
     dataset_id   String,
     id           String,

@@ -1,8 +1,8 @@
 -- -----------------------------------------------------------------------------
--- orders — заказы
+-- orders
 -- -----------------------------------------------------------------------------
 
--- Отдельная consumer group читает Debezium envelope целиком.
+-- A dedicated consumer group reads the original Debezium envelope.
 CREATE TABLE IF NOT EXISTS capstone.orders_cdc_queue (
     payload String
 )
@@ -17,9 +17,9 @@ SETTINGS
     kafka_max_block_size      = 10000,
     kafka_flush_interval_ms   = 1000;
 
--- Snapshot, INSERT и UPDATE содержат новое состояние в after.
--- DELETE: берём before, увеличиваем version на 1 и ставим is_deleted = 1.
--- Kafka tombstone не является состоянием заказа и в raw не записывается.
+-- Snapshot, INSERT and UPDATE events contain the new state in after.
+-- DELETE: use before, increment version by 1 and set is_deleted = 1.
+-- Kafka tombstones are not order states and are excluded from raw.
 CREATE MATERIALIZED VIEW IF NOT EXISTS capstone.orders_cdc_to_raw
 TO capstone.orders_raw AS
 WITH
@@ -65,7 +65,7 @@ FROM capstone.orders_cdc_queue
 WHERE _operation IN ('r', 'c', 'u', 'd');
 
 -- -----------------------------------------------------------------------------
--- order_items — позиции заказов
+-- order_items
 -- -----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS capstone.order_items_cdc_queue (
@@ -82,7 +82,7 @@ SETTINGS
     kafka_max_block_size      = 10000,
     kafka_flush_interval_ms   = 1000;
 
--- Для позиций нет бизнес-версии. Сохраняем LSN и признак удаления.
+-- Items have no business version. Store the LSN and deletion flag.
 CREATE MATERIALIZED VIEW IF NOT EXISTS capstone.order_items_cdc_to_raw
 TO capstone.order_items_raw AS
 WITH
@@ -118,7 +118,7 @@ FROM capstone.order_items_cdc_queue
 WHERE _operation IN ('r', 'c', 'u', 'd');
 
 -- -----------------------------------------------------------------------------
--- payments — оплаты и возвраты
+-- payments
 -- -----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS capstone.payments_cdc_queue (
@@ -135,8 +135,8 @@ SETTINGS
     kafka_max_block_size      = 10000,
     kafka_flush_interval_ms   = 1000;
 
--- По контракту payments — append-only: snapshot и новые факты оплат/возвратов.
--- MV обрабатывает только snapshot и INSERT; UPDATE и DELETE платежей пропускаются.
+-- Payments are append-only: snapshots and new capture/refund operations.
+-- The MV handles snapshots and INSERTs only; payment UPDATEs and DELETEs are ignored.
 CREATE MATERIALIZED VIEW IF NOT EXISTS capstone.payments_cdc_to_raw
 TO capstone.payments_raw AS
 SELECT

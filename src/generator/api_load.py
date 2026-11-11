@@ -124,118 +124,118 @@ class Http:
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
-        description="Генерирует корректные и ошибочные запросы к API аналитики.",
-        epilog="Пример: just api-load --duration 600 --rate 10 --error-rate 0.1. Просмотр запросов: just api-load --dry-run.",
+        description="Generate valid and invalid requests to the analytics API.",
+        epilog="Example: just api-load --duration 600 --rate 10 --error-rate 0.1. Preview requests: just api-load --dry-run.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--url",
         default="http://127.0.0.1:18001",
-        help="Адрес API",
+        help="API base URL",
     )
     parser.add_argument(
         "--dataset",
         default="demo",
-        help="Датасет для корректных запросов",
+        help="Dataset for valid requests",
     )
     parser.add_argument(
         "--seed",
         type=int,
         default=42,
-        help="Seed для воспроизводимой последовательности",
+        help="Random seed for reproducible output",
     )
     parser.add_argument(
         "--from",
         dest="start",
         default="2026-01-01T00:00:00Z",
-        help="Начало периода, ISO 8601 с часовым поясом",
+        help="Period start, ISO 8601 with a timezone",
     )
     parser.add_argument(
         "--to",
         dest="end",
         default="2026-01-02T00:00:00Z",
-        help="Конец периода, ISO 8601 с часовым поясом",
+        help="Period end, ISO 8601 with a timezone",
     )
     parser.add_argument(
         "--duration",
         type=float,
         default=180,
-        help="Продолжительность нагрузки, секунды",
+        help="Load duration in seconds",
     )
     parser.add_argument(
         "--requests",
         type=int,
-        help="Ограничить общее число запросов",
+        help="Maximum number of requests",
     )
     parser.add_argument(
         "--rate",
         type=float,
         default=10,
-        help="Запросов/с суммарно; 0 — без ограничения",
+        help="Total requests per second; 0 means unlimited",
     )
     parser.add_argument(
         "--concurrency",
         type=int,
         default=4,
-        help="Размер пакета и максимум одновременных запросов",
+        help="Batch size and maximum concurrent requests",
     )
     parser.add_argument(
         "--timeout",
         type=float,
         default=10,
-        help="Общий тайм-аут запроса, секунды",
+        help="Total request timeout in seconds",
     )
     parser.add_argument(
         "--refresh-rate",
         type=float,
         default=0.2,
-        help="Доля запросов сводок с refresh=true",
+        help="Fraction of summary requests with refresh=true",
     )
     parser.add_argument(
         "--error-rate",
         type=float,
         default=0.1,
-        help="Доля запросов с некорректными параметрами; ожидаемый HTTP-код — 422",
+        help="Fraction of invalid requests; expected HTTP status: 422",
     )
     parser.add_argument(
         "--error-type",
         action="append",
         choices=ERROR_TYPES,
-        help="Тип ошибки; можно повторить, по умолчанию все",
+        help="Error type; repeat to select several, defaults to all",
     )
     parser.add_argument(
         "--endpoint",
         action="append",
         choices=ENDPOINTS,
-        help="Эндпоинт; можно повторить, по умолчанию все пять",
+        help="Endpoint; repeat to select several, defaults to all five",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="JSONL без подключений и пауз; без --requests показывает 10 запросов",
+        help="Print JSONL without connections or delays; defaults to 10 requests unless --requests is set",
     )
     args = parser.parse_args(argv)
     for name in ("duration", "timeout"):
         if not math.isfinite(getattr(args, name)) or getattr(args, name) <= 0:
-            parser.error(f"--{name} должен быть конечным числом > 0")
+            parser.error(f"--{name} must be a finite number > 0")
     if not math.isfinite(args.rate) or args.rate < 0:
-        parser.error("--rate должен быть конечным числом >= 0")
+        parser.error("--rate must be a finite number >= 0")
     if args.concurrency <= 0 or (args.requests is not None and args.requests <= 0):
-        parser.error("--concurrency и --requests должны быть > 0")
+        parser.error("--concurrency and --requests must be > 0")
     for name in ("refresh_rate", "error_rate"):
         if not 0 <= getattr(args, name) <= 1:
-            parser.error(f"--{name.replace('_', '-')} должен быть от 0 до 1")
+            parser.error(f"--{name.replace('_', '-')} must be between 0 and 1")
     if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", args.dataset):
-        parser.error("--dataset: 1–64 символа a-z, 0-9, _ и -, первый — буква или цифра")
+        parser.error("--dataset: 1–64 characters from a-z, 0-9, _ and -; start with a letter or digit")
     try:
         url = httpx.URL(args.url)
         if url.scheme not in ("http", "https") or not url.host or url.query or url.fragment:
-            raise ValueError("--url: HTTP(S)-адрес без параметров запроса и фрагмента")
+            raise ValueError("--url: HTTP(S) URL without a query string or fragment")
         start, end = datetime.fromisoformat(args.start), datetime.fromisoformat(args.end)
         if start.utcoffset() is None or end.utcoffset() is None:
-            raise ValueError("--from и --to должны содержать часовой пояс")
+            raise ValueError("--from and --to must include a timezone")
         if not timedelta(0) < end - start <= timedelta(days=31):
-            raise ValueError("Период должен быть положительным и не длиннее 31 дня")
+            raise ValueError("The period must be positive and no longer than 31 days")
     except (ValueError, httpx.InvalidURL) as error:
         parser.error(str(error))
     if args.dry_run and args.requests is None:
@@ -251,8 +251,8 @@ def format_percentile_ms(sorted_durations: list[float], fraction: float) -> str:
 
 def print_report(totals, stats, elapsed: float):
     print(
-        f"Готово: сформировано {totals['generated']}, выполнено {totals['completed']} запросов "
-        f"за {elapsed:.2f} с; {totals['completed'] / elapsed:.2f}/с.", file=sys.stderr,
+        f"Done: generated {totals['generated']}, completed {totals['completed']} requests "
+        f"in {elapsed:.2f} s; {totals['completed'] / elapsed:.2f} requests/s.", file=sys.stderr,
     )
     print(json.dumps(dict(totals), ensure_ascii=False, indent=2), file=sys.stderr)
     if not any(result.durations for result in stats.values()):
@@ -285,19 +285,19 @@ async def run(args):
     console = Console(stderr=True, highlight=False, markup=False)
     progress = Progress(
         SpinnerColumn(), TextColumn("{task.description}"),
-        TextColumn("запросов: {task.completed:,.0f}"),
-        TextColumn("ошибок: {task.fields[errors]:,}"),
-        TextColumn("{task.fields[speed]:.0f}/с"), TimeElapsedColumn(),
+        TextColumn("requests: {task.completed:,.0f}"),
+        TextColumn("errors: {task.fields[errors]:,}"),
+        TextColumn("{task.fields[speed]:.0f}/s"), TimeElapsedColumn(),
         console=console, disable=args.dry_run or not console.is_terminal,
         redirect_stdout=False, redirect_stderr=False,
     )
-    print(f"Датасет {args.dataset}. seed={args.seed}. API={args.url}. error-rate={args.error_rate:g}", file=sys.stderr)
+    print(f"Dataset {args.dataset}. seed={args.seed}. API={args.url}. error-rate={args.error_rate:g}", file=sys.stderr)
     try:
         if not args.dry_run:
             sink = Http(args, totals, stats)
             await sink.open()
         with progress:
-            task = progress.add_task("Отправка", total=None, errors=0, speed=0)
+            task = progress.add_task("Sending", total=None, errors=0, speed=0)
             while args.dry_run or time.monotonic() < deadline:
                 batch_size = args.concurrency
                 if args.rate and not args.dry_run:
@@ -324,9 +324,9 @@ async def run(args):
                 )
                 if not console.is_terminal and not args.dry_run and now - reported >= 2:
                     print(
-                        f"Выполнено запросов: {totals['completed']}; HTTP-ошибок: {errors}; "
-                        f"неожиданных ответов: {totals['unexpected_responses']}; "
-                        f"сетевых ошибок: {totals['transport_errors']}; скорость: {totals['completed'] / (now - started):.0f}/с",
+                        f"Completed requests: {totals['completed']}; HTTP errors: {errors}; "
+                        f"unexpected responses: {totals['unexpected_responses']}; "
+                        f"transport errors: {totals['transport_errors']}; rate: {totals['completed'] / (now - started):.0f}/s",
                         file=sys.stderr, flush=True,
                     )
                     reported = now
@@ -340,5 +340,5 @@ if __name__ == "__main__":
     try:
         asyncio.run(run(parse_args()))
     except KeyboardInterrupt:
-        print("Остановлено.", file=sys.stderr)
+        print("Stopped.", file=sys.stderr)
         sys.exit(130)

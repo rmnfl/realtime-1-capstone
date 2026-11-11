@@ -4,10 +4,10 @@ CREATE USER IF NOT EXISTS reader IDENTIFIED WITH sha256_password BY 'reader';
 GRANT SELECT ON capstone.* TO reader;
 
 -- -----------------------------------------------------------------------------
--- orders — заказы
+-- orders
 -- -----------------------------------------------------------------------------
 
--- История доставленных состояний: сохраняем все версии и повторы.
+-- Delivery history: retain all versions and duplicates.
 CREATE TABLE IF NOT EXISTS capstone.orders_raw (
     dataset_id       String,
     id               String,
@@ -31,10 +31,10 @@ ENGINE = MergeTree
 ORDER BY (dataset_id, id, version);
 
 -- -----------------------------------------------------------------------------
--- order_items — позиции заказов
+-- order_items
 -- -----------------------------------------------------------------------------
 
--- Позиции могут удаляться; порядок состояний определяем по метаданным CDC.
+-- Items can be deleted; CDC metadata determines their version order.
 CREATE TABLE IF NOT EXISTS capstone.order_items_raw (
     dataset_id       String,
     id               String,
@@ -56,10 +56,10 @@ ENGINE = MergeTree
 ORDER BY (dataset_id, id, _source_lsn);
 
 -- -----------------------------------------------------------------------------
--- payments — оплаты и возвраты
+-- payments
 -- -----------------------------------------------------------------------------
 
--- Платежи — неизменяемые факты. В raw сохраняем и повторные доставки.
+-- Payments are immutable facts. Raw tables also retain duplicate deliveries.
 CREATE TABLE IF NOT EXISTS capstone.payments_raw (
     dataset_id       String,
     id               String,

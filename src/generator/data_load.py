@@ -179,7 +179,7 @@ class Postgres:
                     "DELETE FROM {} WHERE dataset_id = %s AND id = %s"
                 ).format(target)
             case _:
-                raise ValueError(f"Неизвестная операция: {op}")
+                raise ValueError(f"Unknown operation: {op}")
 
         self.statements[key] = statement
         return statement
@@ -266,11 +266,11 @@ class Kafka:
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
-        description="Генерирует заказы, позиции, оплаты и возвраты; отправляет их в PostgreSQL или Kafka.",
+        description="Generate orders, items, captures and refunds; send them to PostgreSQL or Kafka.",
         epilog=(
-            "Просмотр событий: just data-load --orders 3 --dry-run. "
-            "Запуск нагрузки: just data-load --orders 10000 --rate 1000. "
-            "Для нового прогона используйте новый датасет. "
+            "Preview events: just data-load --orders 3 --dry-run. "
+            "Run a load test: just data-load --orders 10000 --rate 1000. "
+            "Use a new dataset for each run. "
             "Kafka mode sends compatible Debezium envelopes directly to CDC topics; PostgreSQL is unchanged."
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -278,147 +278,147 @@ def parse_args(argv=None):
     parser.add_argument(
         "target",
         choices=["postgres", "kafka"],
-        help="Приёмник событий: PostgreSQL или Kafka",
+        help="Event destination: PostgreSQL or Kafka",
     )
     parser.add_argument(
         "--dataset",
         default=f"shop_{uuid4().hex[:12]}",
-        help="Датасет; по умолчанию создаётся новое имя",
+        help="Dataset; defaults to a new generated name",
     )
     parser.add_argument(
         "--seed",
         type=int,
         default=42,
-        help="Seed для воспроизводимой последовательности",
+        help="Random seed for reproducible output",
     )
     parser.add_argument(
         "--orders",
         type=int,
         default=10000,
-        help="Максимальное число заказов",
+        help="Maximum number of orders",
     )
     parser.add_argument(
         "--start-id",
         type=int,
         default=0,
-        help="Начальный номер заказа; при продолжении датасета берите новый диапазон ID",
+        help="Starting order number; use a new ID range when extending a dataset",
     )
     parser.add_argument(
         "--duration",
         type=float,
-        help="Ограничить загрузку по времени в секундах; текущий заказ завершается полностью",
+        help="Load duration limit in seconds; the current order is completed before stopping",
     )
     parser.add_argument(
         "--rate",
         type=float,
         default=1000,
-        help="Изменений строк/с; 0 — без ограничения",
+        help="Row changes per second; 0 means unlimited",
     )
     parser.add_argument(
         "--batch-size",
         type=int,
         default=500,
-        help="Размер пакета изменений; в PostgreSQL — одна транзакция",
+        help="Changes per batch; one PostgreSQL transaction per batch",
     )
     parser.add_argument(
         "--campaigns",
         type=int,
         default=32,
-        help="Число рекламных кампаний",
+        help="Number of campaigns",
     )
     parser.add_argument(
         "--start-date",
         default="2026-01-01",
-        help="Начальная дата создания заказов, YYYY-MM-DD, UTC",
+        help="Start date for order creation, YYYY-MM-DD, UTC",
     )
     parser.add_argument(
         "--days",
         type=int,
         default=28,
-        help="Число суток для распределения дат создания заказов",
+        help="Number of days across which order creation times are distributed",
     )
     parser.add_argument(
         "--paid-rate",
         type=float,
         default=0.8,
-        help="Доля оплачиваемых заказов, от 0 до 1",
+        help="Fraction of orders to pay, from 0 to 1",
     )
     parser.add_argument(
         "--refund-rate",
         type=float,
         default=0.1,
-        help="Доля оплаченных заказов с полным возвратом, от 0 до 1",
+        help="Fraction of paid orders to refund in full, from 0 to 1",
     )
     parser.add_argument(
         "--delete-rate",
         type=float,
         default=0.05,
-        help="Доля удаляемых неоплаченных заказов, от 0 до 1",
+        help="Fraction of unpaid orders to delete, from 0 to 1",
     )
     parser.add_argument(
         "--duplicate-rate",
         type=float,
         default=0,
-        help="Kafka: вероятность повторной отправки события, от 0 до 1",
+        help="Kafka: probability of sending an event twice, from 0 to 1",
     )
     parser.add_argument(
-        "--dsn", help="Подключение к PostgreSQL; можно через POSTGRES_DSN"
+        "--dsn", help="PostgreSQL connection string; also accepts POSTGRES_DSN"
     )
     parser.add_argument(
         "--brokers",
         default="localhost:19093",
-        help="Адреса брокеров Kafka, например localhost:19093",
+        help="Kafka broker addresses, e.g. localhost:19093",
     )
     parser.add_argument(
         "--topic-prefix",
         default="capstone.capstone",
-        help="Префикс топиков: <prefix>.orders, .order_items, .payments",
+        help="CDC topic prefix: <prefix>.orders, .order_items, .payments",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="JSONL в stdout, без подключений, пауз и повторов",
+        help="Print JSONL to stdout without connections, delays or duplicate sends",
     )
     args = parser.parse_args(argv)
     args.dsn = args.dsn or os.environ.get("POSTGRES_DSN")
     for name in ("orders", "batch_size", "campaigns", "days"):
         if getattr(args, name) <= 0:
-            parser.error(f"--{name.replace('_', '-')} должен быть больше 0")
+            parser.error(f"--{name.replace('_', '-')} must be > 0")
     if not math.isfinite(args.rate) or args.rate < 0:
-        parser.error("--rate должен быть конечным числом >= 0")
+        parser.error("--rate must be a finite number >= 0")
     if args.start_id < 0:
-        parser.error("--start-id должен быть >= 0")
+        parser.error("--start-id must be >= 0")
     if args.duration is not None and (not math.isfinite(args.duration) or args.duration <= 0):
-        parser.error("--duration должен быть конечным числом > 0")
+        parser.error("--duration must be a finite number > 0")
     for name in ("paid_rate", "refund_rate", "delete_rate", "duplicate_rate"):
         if not 0 <= getattr(args, name) <= 1:
-            parser.error(f"--{name.replace('_', '-')} должен быть от 0 до 1")
+            parser.error(f"--{name.replace('_', '-')} must be between 0 and 1")
     if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", args.dataset):
         parser.error(
-            "--dataset: 1–64 символа a-z, 0-9, _ и -, первый — буква или цифра"
+            "--dataset: 1–64 characters from a-z, 0-9, _ and -; start with a letter or digit"
         )
     try:
         anchor = datetime.strptime(args.start_date, "%Y-%m-%d")
         if anchor.strftime("%Y-%m-%d") != args.start_date:
-            raise ValueError("Используйте YYYY-MM-DD")
+            raise ValueError("Use YYYY-MM-DD")
         anchor + timedelta(days=args.days + 1)
     except (ValueError, OverflowError):
-        parser.error("Неверная дата или слишком большой --days")
+        parser.error("Invalid date or --days is too large")
     if not re.fullmatch(r"[a-zA-Z0-9_.-]{1,200}", args.topic_prefix):
         parser.error("--topic-prefix: 1–200 characters from a-z, A-Z, 0-9, _, . and -")
     if args.target == "postgres" and args.duplicate_rate:
         parser.error(
-            "--duplicate-rate применим только к Kafka: повторный UPDATE не является повторной доставкой"
+            "--duplicate-rate is only supported for Kafka: repeating an UPDATE is not duplicate delivery"
         )
     if args.target == "postgres" and not args.dry_run and not args.dsn:
-        parser.error("Укажите --dsn или POSTGRES_DSN")
+        parser.error("Provide --dsn or POSTGRES_DSN")
     return args
 
 
 def print_report(totals, changes: int, records: int, elapsed: float):
     report = [
-        f"Готово: {changes} изменений, {records} записей за {elapsed:.2f} с.",
-        "Что должно получиться после обработки всего датасета:",
+        f"Done: {changes} changes, {records} records in {elapsed:.2f} s.",
+        "Expected totals after processing the entire dataset:",
         json.dumps(dict(totals), ensure_ascii=False, indent=2),
     ]
     for line in report:
@@ -446,9 +446,9 @@ async def run(args):
     progress = Progress(
         SpinnerColumn(),
         TextColumn("{task.description}"),
-        TextColumn("изменений: {task.completed:,.0f}"),
-        TextColumn("записей: {task.fields[records]:,}"),
-        TextColumn("{task.fields[speed]:.0f}/с"),
+        TextColumn("changes: {task.completed:,.0f}"),
+        TextColumn("records: {task.fields[records]:,}"),
+        TextColumn("{task.fields[speed]:.0f}/s"),
         TimeElapsedColumn(),
         console=console,
         disable=args.dry_run or not console.is_terminal,
@@ -456,10 +456,10 @@ async def run(args):
         redirect_stderr=False,
     )
     print(
-        f"Датасет {args.dataset}",
+        f"Dataset {args.dataset}",
         f"seed={args.seed}",
-        f"заказов={args.orders}",
-        f"цель={args.target}",
+        f"orders={args.orders}",
+        f"target={args.target}",
         sep=". ",
         file=sys.stderr,
     )
@@ -468,7 +468,7 @@ async def run(args):
             sink = Postgres(args) if args.target == "postgres" else Kafka(args)
             await sink.open()
         with progress:
-            task = progress.add_task("Отправка", total=None, records=0, speed=0)
+            task = progress.add_task("Sending", total=None, records=0, speed=0)
             while batch := list(islice(source, args.batch_size)):
                 batch_started = time.monotonic()
                 if sink is None:
@@ -505,8 +505,8 @@ async def run(args):
                 )
                 if (args.dry_run or not console.is_terminal) and now - reported >= 2:
                     print(
-                        f"{'Сформировано' if args.dry_run else 'Подтверждено'} изменений: {changes}; записей: {records}; "
-                        f"скорость: {changes / (now - started):.0f}/с; прошло {now - started:.1f}с",
+                        f"{'Generated' if args.dry_run else 'Acknowledged'} changes: {changes}; records: {records}; "
+                        f"rate: {changes / (now - started):.0f}/s; elapsed: {now - started:.1f}s",
                         file=sys.stderr,
                     )
                     reported = now
@@ -519,9 +519,9 @@ async def run(args):
                     message = message.replace(password, "***")
             except Exception:
                 message = type(error).__name__
-        print(f"Отправка не завершена: {message}", file=sys.stderr)
+        print(f"Sending failed: {message}", file=sys.stderr)
         print(
-            "Часть датасета могла сохраниться; для нового прогона используйте новый --dataset.",
+            "Part of the dataset may have been saved; use a new --dataset for the next run.",
             file=sys.stderr,
         )
         raise SystemExit(1) from None
@@ -536,14 +536,14 @@ if __name__ == "__main__":
         asyncio.run(run(parse_args()))
     except KeyboardInterrupt:
         print(
-            "Остановлено. Для нового прогона используйте новый --dataset на всякий случай.",
+            "Stopped. Use a new --dataset for the next run to avoid ID conflicts.",
             file=sys.stderr,
         )
         sys.exit(130)
     except Exception as error:
         print(
-            f"Отправка не завершена ({type(error).__name__}).",
-            "Проверьте доступность и конфигурацию kafka/postgres, права и уникальность --dataset.",
+            f"Sending failed ({type(error).__name__}).",
+            "Check Kafka/PostgreSQL availability, configuration, permissions and --dataset uniqueness.",
             file=sys.stderr,
         )
         sys.exit(1)

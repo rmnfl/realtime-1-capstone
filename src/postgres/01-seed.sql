@@ -48,7 +48,7 @@ VALUES
 -- payments
 -- -----------------------------------------------------------------------------
 
--- o8 полностью возвращён и отменён; o6 частично возвращён и остаётся paid.
+-- o8 is fully refunded and cancelled; o6 is partially refunded and remains paid.
 INSERT INTO capstone.payments (
     dataset_id, id, order_id, kind, amount_cents, occurred_at
 )

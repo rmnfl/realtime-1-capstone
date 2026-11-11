@@ -1,4 +1,4 @@
--- Исходные таблицы заказов, позиций и платежей.
+-- Source tables for orders, order items and payments.
 CREATE SCHEMA IF NOT EXISTS capstone;
 
 CREATE TABLE IF NOT EXISTS capstone.orders (
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS capstone.payments (
         REFERENCES capstone.orders (dataset_id, id)
 );
 
--- Полный старый образ строки для UPDATE и DELETE.
+-- Include the full previous row in UPDATE and DELETE events.
 ALTER TABLE capstone.orders REPLICA IDENTITY FULL;
 ALTER TABLE capstone.order_items REPLICA IDENTITY FULL;
 ALTER TABLE capstone.payments REPLICA IDENTITY FULL;
@@ -43,7 +43,7 @@ ALTER TABLE capstone.payments REPLICA IDENTITY FULL;
 CREATE PUBLICATION capstone_pub
 FOR TABLE capstone.orders, capstone.order_items, capstone.payments;
 
--- Пользователь Debezium: репликация и чтение для snapshot.
+-- Debezium role: replication and SELECT access for snapshots.
 CREATE ROLE debezium WITH LOGIN REPLICATION PASSWORD 'debezium';
 
 GRANT USAGE ON SCHEMA capstone TO debezium;
@@ -51,7 +51,7 @@ GRANT SELECT ON capstone.orders TO debezium;
 GRANT SELECT ON capstone.order_items TO debezium;
 GRANT SELECT ON capstone.payments TO debezium;
 
--- Пользователь exporter: чтение статистики PostgreSQL.
+-- Exporter role: read PostgreSQL statistics.
 CREATE ROLE monitor WITH LOGIN PASSWORD 'monitor';
 
 GRANT pg_monitor TO monitor;

@@ -1,4 +1,4 @@
-"""Проверяет snapshot, доставку изменений и дедупликацию на запущенном стенде."""
+"""Verify snapshots, CDC delivery and deduplication on the running stack."""
 
 import argparse
 import asyncio
@@ -102,12 +102,12 @@ def build_expected_metrics(stage):
 def assert_equal(actual, wanted, path="data"):
     if isinstance(wanted, dict):
         if not isinstance(actual, dict) or actual.keys() != wanted.keys():
-            raise AssertionError(f"{path}: поля {actual!r}, ожидалось {wanted!r}")
+            raise AssertionError(f"{path}: fields {actual!r}, expected {wanted!r}")
         for key, value in wanted.items():
             assert_equal(actual[key], value, f"{path}.{key}")
     elif isinstance(wanted, list):
         if not isinstance(actual, list) or len(actual) != len(wanted):
-            raise AssertionError(f"{path}: {actual!r}, ожидалось {wanted!r}")
+            raise AssertionError(f"{path}: {actual!r}, expected {wanted!r}")
         for index, value in enumerate(wanted):
             assert_equal(actual[index], value, f"{path}[{index}]")
     elif path.endswith("bucket_start"):
@@ -130,7 +130,7 @@ def wait_for(check, description, timeout=60, announce=False):
             return result
         except (AssertionError, httpx.HTTPError) as error:
             if time.monotonic() >= deadline:
-                raise RuntimeError(f"Не дождались: {description}\n{error}") from error
+                raise RuntimeError(f"Timed out waiting for: {description}\n{error}") from error
             time.sleep(1)
 
 
@@ -161,7 +161,7 @@ def verify_metrics(client, dataset, stage):
             assert_equal(answers[endpoint], value, endpoint)
         return answers
 
-    return wait_for(check, f"{dataset}: ожидаемое состояние {stage} во всех ответах API")
+    return wait_for(check, f"{dataset}: expected {stage} state in all API responses")
 
 
 def print_table(headers, rows):
@@ -177,58 +177,58 @@ def build_metric_overview(answers):
     payments = answers["payments/total"][0]
     products = answers["products/summary"]
     return {
-        "Заказов": orders["orders_count"],
-        "В статусе created": orders["created_orders_count"],
-        "В статусе paid": orders["paid_orders_count"],
-        "В статусе cancelled": orders["cancelled_orders_count"],
-        "Сумма оплаченных заказов, коп.": orders["paid_amount_cents"],
-        "SKU в оплаченных заказах": len(products),
-        "Единиц в оплаченных заказах": sum(row["units_count"] for row in products),
-        "Оплаты: число / коп.": f"{payments['captures_count']} / {payments['captured_amount_cents']}",
-        "Возвраты: число / коп.": f"{payments['refunds_count']} / {payments['refunded_amount_cents']}",
-        "Оплаты минус возвраты, коп.": payments["net_amount_cents"],
+        "Orders": orders["orders_count"],
+        "Status: created": orders["created_orders_count"],
+        "Status: paid": orders["paid_orders_count"],
+        "Status: cancelled": orders["cancelled_orders_count"],
+        "Paid order amount, kopecks": orders["paid_amount_cents"],
+        "SKUs in paid orders": len(products),
+        "Units in paid orders": sum(row["units_count"] for row in products),
+        "Captures: count / kopecks": f"{payments['captures_count']} / {payments['captured_amount_cents']}",
+        "Refunds: count / kopecks": f"{payments['refunds_count']} / {payments['refunded_amount_cents']}",
+        "Net payments, kopecks": payments["net_amount_cents"],
     }
 
 
 def print_comparison(before, after):
     current = build_metric_overview(after)
     if before is None:
-        print_table(("Показатель", "В API"), list(current.items()))
+        print_table(("Metric", "API value"), list(current.items()))
     else:
         previous = build_metric_overview(before)
-        print_table(("Показатель", "До", "После"), [
+        print_table(("Metric", "Before", "After"), [
             (name, previous[name], value) for name, value in current.items()
         ])
-    print("Проверены все пять эндпоинтов, оба ряда за 24 часа и итог платежей.", flush=True)
+    print("Verified all five endpoints, both 24-hour series and the payment total.", flush=True)
 
 
 STEPS = {
     "create": (
-        "Создаём заказ",
-        "В PostgreSQL появится заказ o1 на 10000 копеек и две товарные позиции: "
-        "1 × 6000 и 2 × 2000.",
-        "Один заказ со статусом created. Оплаченных товаров и платежей пока нет.",
+        "Create an order",
+        "Insert order o1 for 10000 kopecks and two items into PostgreSQL: "
+        "1 × 6000 and 2 × 2000.",
+        "One order with status created. No paid products or payments yet.",
         "empty",
     ),
     "pay": (
-        "Оплачиваем заказ",
-        "Одной транзакцией меняем статус o1 на paid, увеличиваем version до 2 "
-        "и записываем capture на 10000 копеек.",
-        "Сумму оплаченных заказов 10000 копеек, два SKU, три единицы товара и одну оплату.",
+        "Pay the order",
+        "In one transaction, set o1 to paid, increase version to 2 "
+        "and insert a capture for 10000 kopecks.",
+        "Paid order amount: 10000 kopecks; two SKUs, three units and one capture.",
         "create",
     ),
     "refund": (
-        "Возвращаем деньги",
-        "Одной транзакцией меняем статус o1 на cancelled, увеличиваем version до 3 "
-        "и записываем refund на 10000 копеек.",
-        "Один заказ со статусом cancelled и нулевую сумму оплаченных заказов. "
-        "Оплата и возврат останутся в истории; их разница равна нулю.",
+        "Refund the order",
+        "In one transaction, set o1 to cancelled, increase version to 3 "
+        "and insert a refund for 10000 kopecks.",
+        "One cancelled order and a paid order amount of zero. "
+        "The capture and refund remain in history; their net amount is zero.",
         "pay",
     ),
     "delete": (
-        "Физически удаляем неоплаченный заказ",
-        "Удаляем две позиции и сам заказ из PostgreSQL одной транзакцией.",
-        "Ноль заказов. В ClickHouse останется последняя версия с is_deleted=1.",
+        "Delete an unpaid order",
+        "Delete both items and the order from PostgreSQL in one transaction.",
+        "Zero orders. ClickHouse retains the latest version with is_deleted=1.",
         "create",
     ),
 }
@@ -236,14 +236,14 @@ STEPS = {
 
 def run_step(client, dataset, stage):
     title, action, expectation, previous = STEPS[stage]
-    print(f"\n{title}\n{action}\nОжидаем в API: {expectation}", flush=True)
+    print(f"\n{title}\n{action}\nExpected API result: {expectation}", flush=True)
     if stage == "create":
         history = query_clickhouse(client, """
             SELECT count() AS n FROM capstone.orders_raw
             WHERE dataset_id = {dataset:String} FORMAT JSONEachRow
         """, dataset)
         if int(history[0]["n"]) != 0:
-            raise ValueError(f"Датасет {dataset} уже использовался. Выберите новое имя.")
+            raise ValueError(f"Dataset {dataset} has already been used. Choose a new name.")
     before = verify_metrics(client, dataset, previous)
     apply_source_change(dataset, stage)
     after = verify_metrics(client, dataset, stage)
@@ -264,15 +264,15 @@ def run_step(client, dataset, stage):
                 "order_items_latest",
             )
 
-        wait_for(check_deleted, "флаги удаления в ClickHouse")
-        print("ClickHouse: заказ с version=2 и обе позиции имеют is_deleted=1.")
+        wait_for(check_deleted, "deletion flags in ClickHouse")
+        print("ClickHouse: the order has version=2; the order and both items have is_deleted=1.")
     print_comparison(before, after)
 
 
 def run_snapshot(client):
-    print("\nИсходный snapshot\nВ PostgreSQL до запуска Debezium было 12 заказов, "
-          "14 позиций и 9 платежных операций.\n"
-          "Ожидаем эти данные в API после начального snapshot.", flush=True)
+    print("\nInitial snapshot\nBefore Debezium started, PostgreSQL contained 12 orders, "
+          "14 items and 9 payment operations.\n"
+          "These records should appear in the API after the initial snapshot.", flush=True)
     answers = verify_metrics(client, "demo", "snapshot")
 
     def check_snapshot():
@@ -284,12 +284,12 @@ def run_snapshot(client):
                 FORMAT JSONEachRow
             """, "demo")[0]["n"])
             if count != wanted:
-                raise AssertionError(f"{table}: snapshot содержит {count} ключей, ожидалось {wanted}")
+                raise AssertionError(f"{table}: snapshot contains {count} keys, expected {wanted}")
             rows.append((table, count))
         return rows
 
-    rows = wait_for(check_snapshot, "snapshot-события трёх таблиц в raw")
-    print_table(("Таблица PostgreSQL", "Ключей в raw с op=r"), rows)
+    rows = wait_for(check_snapshot, "snapshot events from all three tables in raw")
+    print_table(("PostgreSQL table", "Keys in raw with op=r"), rows)
     print_comparison(None, answers)
 
 
@@ -300,7 +300,7 @@ def apply_source_change(dataset, stage):
             if stage == "create":
                 cursor.execute("SELECT 1 FROM capstone.orders WHERE dataset_id = %s LIMIT 1", (dataset,))
                 if cursor.fetchone():
-                    raise ValueError(f"Датасет {dataset} уже занят. Выберите новый dataset_id.")
+                    raise ValueError(f"Dataset {dataset} is already in use. Choose a new dataset_id.")
                 cursor.executemany("""
                     INSERT INTO capstone.orders
                         (dataset_id, id, campaign_id, status, amount_cents, version, created_at, updated_at)
@@ -319,7 +319,7 @@ def apply_source_change(dataset, stage):
                     FOR UPDATE
                 """, (dataset,))
                 if not cursor.fetchone():
-                    raise ValueError("Физическое удаление в демо выполняется только для неоплаченного o1.")
+                    raise ValueError("The demo only deletes unpaid order o1.")
                 cursor.execute("DELETE FROM capstone.order_items WHERE dataset_id = %s AND order_id = 'o1'", (dataset,))
                 cursor.execute("DELETE FROM capstone.orders WHERE dataset_id = %s AND id = 'o1'", (dataset,))
             else:
@@ -333,14 +333,14 @@ def apply_source_change(dataset, stage):
                     WHERE dataset_id = %s AND id = 'o1' AND status = %s AND version = %s
                 """, (status, dataset, previous, version))
                 if cursor.rowcount != 1:
-                    raise ValueError(f"Для {stage} заказ o1 должен иметь статус {previous}, version={version}.")
+                    raise ValueError(f"For {stage}, order o1 must have status {previous}, version={version}.")
                 cursor.execute("""
                     INSERT INTO capstone.payments
                         (dataset_id, id, order_id, kind, amount_cents, occurred_at)
                     VALUES (%s, %s, 'o1', %s, 10000, %s)
                 """, (dataset, "p1" if stage == "pay" else "p2", kind,
                       START + timedelta(hours=hour, minutes=1 if stage == "pay" else 0)))
-    print("Изменения сохранены в PostgreSQL. Ждём результат в API…", flush=True)
+    print("Changes committed to PostgreSQL. Waiting for the API result...", flush=True)
 
 
 def query_clickhouse(client, query, dataset):
@@ -365,12 +365,12 @@ async def replay_kafka_events(records):
             consumer.seek(partition, record["offset"])
             message = await asyncio.wait_for(consumer.getone(), timeout=15)
             if message.offset != record["offset"] or message.value is None:
-                raise ValueError(f"Исходное сообщение Kafka недоступно: {record}")
+                raise ValueError(f"Original Kafka message is unavailable: {record}")
             key = json.loads(message.key)
             envelope = json.loads(message.value)
             row = envelope.get("after") or envelope.get("before")
             if key["dataset_id"] != record["dataset_id"] or row["dataset_id"] != record["dataset_id"]:
-                raise ValueError(f"Сообщение Kafka не соответствует raw: {record}")
+                raise ValueError(f"Kafka message does not match raw: {record}")
             messages.append(message)
         await producer.start()
         try:
@@ -380,7 +380,7 @@ async def replay_kafka_events(records):
                     partition=message.partition, headers=list(message.headers),
                 )
                 if result.offset <= message.offset:
-                    raise ValueError("Kafka не присвоила повтору новый offset.")
+                    raise ValueError("Kafka did not assign a new offset to the duplicate.")
         finally:
             await producer.stop()
     finally:
@@ -388,10 +388,10 @@ async def replay_kafka_events(records):
 
 
 def run_duplicates(client, dataset):
-    print("\nПовторно доставляем события\nОтправляем в Kafka те же ключи и Debezium envelope. "
-          "Событие со статусом paid и версией 2 придёт раньше старого события created с версией 1.\n"
-          "Ожидаем: строк в raw станет больше, но в API останется один оплаченный заказ, "
-          "сумма 10000, три единицы товара и одна оплата.", flush=True)
+    print("\nReplay events\nSend the same keys and Debezium envelopes to Kafka. "
+          "The paid event with version 2 arrives before the old created event with version 1.\n"
+          "Expected: raw row counts increase, but the API still returns one paid order, "
+          "10000 kopecks, three units and one capture.", flush=True)
     before_api = verify_metrics(client, dataset, "pay")
     # Replay the newest events first, so old order versions arrive after them.
     records = []
@@ -407,7 +407,7 @@ def run_duplicates(client, dataset):
             FORMAT JSONEachRow
         """, dataset)
         if not rows:
-            raise ValueError(f"Нет событий {table} для {dataset}.")
+            raise ValueError(f"No {table} events found for {dataset}.")
         for row in rows:
             row["partition"] = int(row["partition"])
             row["offset"] = int(row["offset"])
@@ -427,18 +427,18 @@ def run_duplicates(client, dataset):
             """, dataset)[0]["n"])
             sent = sum(row["topic"] == f"capstone.capstone.{table}" for row in records)
             if counts[table] < before[table] + sent:
-                raise AssertionError(f"{table}_raw: {counts[table]}, ожидалось >= {before[table] + sent}")
+                raise AssertionError(f"{table}_raw: {counts[table]}, expected >= {before[table] + sent}")
         return counts
 
-    after = wait_for(check_raw, "повторы из Kafka записаны в raw", announce=True)
-    print_table(("Таблица", "Строк до", "Строк после"), [
+    after = wait_for(check_raw, "duplicate Kafka events written to raw", announce=True)
+    print_table(("Table", "Rows before", "Rows after"), [
         (f"{table}_raw", before[table], after[table]) for table in TABLES
     ])
     print_comparison(before_api, verify_metrics(client, dataset, "pay"))
 
 
 def print_dataset_info(dataset):
-    print(f"\nДатасет: {dataset}\nПериод API: 2026-01-01T00:00:00Z — 2026-01-02T00:00:00Z", flush=True)
+    print(f"\nDataset: {dataset}\nAPI period: 2026-01-01T00:00:00Z — 2026-01-02T00:00:00Z", flush=True)
 
 
 def run_pipeline(client, dataset):
@@ -451,8 +451,8 @@ def run_pipeline(client, dataset):
 
 def run_delete(client):
     dataset = f"delete_{uuid4().hex[:12]}"
-    print("\nДополнительный эпизод: физическое удаление. "
-          "Для него создаём отдельный неоплаченный заказ.", flush=True)
+    print("\nAdditional scenario: physical deletion. "
+          "Create a separate unpaid order for this scenario.", flush=True)
     print_dataset_info(dataset)
     run_step(client, dataset, "create")
     run_step(client, dataset, "delete")
@@ -463,19 +463,19 @@ def parse_args(argv=None):
     parser.add_argument(
         "step",
         choices=("all", "snapshot", "pipeline", "create", "pay", "refund", "duplicates", "delete", "show"),
-        help="Шаг демо; all выполняет полный прогон",
+        help="Demo step; all runs the complete scenario",
     )
-    parser.add_argument("--dataset", help="Датасет для истории заказа или просмотра ответов API")
+    parser.add_argument("--dataset", help="Dataset for the order lifecycle or API response inspection")
     args = parser.parse_args(argv)
     if args.step in ("pay", "refund", "duplicates", "show") and args.dataset is None:
-        parser.error("Укажите --dataset; для истории заказа используйте имя из demo-create.")
+        parser.error("Provide --dataset; use the name from demo-create for the order lifecycle.")
     if args.step in ("snapshot", "delete") and args.dataset is not None:
-        parser.error("Этот шаг не принимает --dataset: snapshot использует demo, delete создаёт новый датасет.")
+        parser.error("This step does not accept --dataset: snapshot uses demo; delete creates a new dataset.")
     if args.dataset is not None:
         if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", args.dataset):
-            parser.error("--dataset: 1–64 символа a-z, 0-9, _ и -, первый — буква или цифра")
+            parser.error("--dataset: 1–64 characters from a-z, 0-9, _ and -; start with a letter or digit")
         if args.dataset == "demo" and args.step != "show":
-            parser.error("Для контрольного сценария выберите датасет, отличный от demo.")
+            parser.error("Choose a dataset other than demo for the control scenario.")
     args.dataset = args.dataset or f"check_{uuid4().hex[:12]}"
     return args
 
@@ -504,5 +504,5 @@ if __name__ == "__main__":
     try:
         main()
     except (RuntimeError, ValueError, httpx.HTTPError, psycopg.Error, KafkaError, TimeoutError) as error:
-        print(f"Ошибка демо: {error}", file=sys.stderr)
+        print(f"Demo failed: {error}", file=sys.stderr)
         sys.exit(1)
