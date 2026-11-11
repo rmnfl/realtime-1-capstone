@@ -10,15 +10,15 @@ services:
     command: [postgres, -c, wal_level=logical, -c, max_replication_slots=10, -c, max_wal_senders=10]
     environment:
       POSTGRES_DB: capstone
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
     ports: ["127.0.0.1:${PG_PORT:-55434}:5432"]
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./src/postgres/00-init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
       - ./src/postgres/01-seed.sql:/docker-entrypoint-initdb.d/01-seed.sql:ro
     healthcheck:
-      test: [CMD-SHELL, "pg_isready -h 127.0.0.1 -U user -d capstone"]
+      test: [CMD-SHELL, "pg_isready -h 127.0.0.1 -U admin -d capstone"]
       interval: 2s
       timeout: 3s
       retries: 40
@@ -104,7 +104,7 @@ services:
     logging: *logging
     environment:
       CLICKHOUSE_USER: admin
-      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_PASSWORD: admin
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: '1'
     ports: ['127.0.0.1:${CLICKHOUSE_HTTP_PORT:-18133}:8123']
     volumes:

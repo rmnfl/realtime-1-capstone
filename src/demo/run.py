@@ -294,7 +294,7 @@ def run_snapshot(client):
 
 
 def apply_source_change(dataset, stage):
-    dsn = f"postgresql://user:password@127.0.0.1:{os.getenv('PG_PORT', '55434')}/capstone"
+    dsn = f"postgresql://admin:admin@127.0.0.1:{os.getenv('PG_PORT', '55434')}/capstone"
     with psycopg.connect(dsn) as connection:
         with connection.cursor() as cursor:
             if stage == "create":
@@ -346,7 +346,7 @@ def apply_source_change(dataset, stage):
 def query_clickhouse(client, query, dataset):
     response = client.post(
         f"http://127.0.0.1:{os.getenv('CLICKHOUSE_HTTP_PORT', '18133')}",
-        auth=("admin", "password"), params={"param_dataset": dataset}, content=query,
+        auth=("admin", "admin"), params={"param_dataset": dataset}, content=query,
     )
     response.raise_for_status()
     return [json.loads(line) for line in response.text.splitlines()]

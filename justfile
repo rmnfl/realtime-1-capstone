@@ -99,15 +99,15 @@ redis-stop:
 
 # Prepare ClickHouse storage and views before enabling Kafka consumption.
 setup:
-    docker compose exec -T clickhouse clickhouse-client --user admin --password password --multiquery < src/clickhouse/setup/00-init.sql
-    docker compose exec -T clickhouse clickhouse-client --user admin --password password --multiquery < src/clickhouse/setup/01-current.sql
+    docker compose exec -T clickhouse clickhouse-client --user admin --password admin --multiquery < src/clickhouse/setup/00-init.sql
+    docker compose exec -T clickhouse clickhouse-client --user admin --password admin --multiquery < src/clickhouse/setup/01-current.sql
     just metrics-setup
-    docker compose exec -T clickhouse clickhouse-client --user admin --password password --multiquery < src/clickhouse/setup/02-cdc.sql
-    docker compose exec -T clickhouse clickhouse-client --user admin --password password --multiquery < monitoring/clickhouse/pipeline.sql
+    docker compose exec -T clickhouse clickhouse-client --user admin --password admin --multiquery < src/clickhouse/setup/02-cdc.sql
+    docker compose exec -T clickhouse clickhouse-client --user admin --password admin --multiquery < monitoring/clickhouse/pipeline.sql
 
 # Create business views; IF NOT EXISTS does not update existing definitions.
 metrics-setup:
-    for path in src/clickhouse/metrics/*.sql; do docker compose exec -T clickhouse clickhouse-client --user admin --password password --multiquery < "$path"; done
+    for path in src/clickhouse/metrics/*.sql; do docker compose exec -T clickhouse clickhouse-client --user admin --password admin --multiquery < "$path"; done
 
 # -----------------------------------------------------------------------------
 # CDC
@@ -151,12 +151,12 @@ ping:
 # Open PostgreSQL or pass psql arguments, e.g. just pg -c 'SELECT 1'.
 [positional-arguments]
 pg *args:
-    docker compose exec postgres psql -U user -d capstone -v ON_ERROR_STOP=1 "$@"
+    docker compose exec postgres psql -U admin -d capstone -v ON_ERROR_STOP=1 "$@"
 
 # Open ClickHouse or pass client arguments, e.g. just ch --query 'SELECT 1'.
 [positional-arguments]
 ch *args:
-    docker compose exec clickhouse clickhouse-client --user admin --password password --database capstone "$@"
+    docker compose exec clickhouse clickhouse-client --user admin --password admin --database capstone "$@"
 
 # -----------------------------------------------------------------------------
 # Monitoring
@@ -222,7 +222,7 @@ demo-show dataset:
 # Generate PostgreSQL data for 5 minutes; forward overrides.
 [positional-arguments]
 data-load *args:
-    uv run --locked --group generator src/generator/data_load.py postgres --dsn "postgresql://user:password@127.0.0.1:${PG_PORT:-55434}/capstone" --duration 300 "$@"
+    uv run --locked --group generator src/generator/data_load.py postgres --dsn "postgresql://admin:admin@127.0.0.1:${PG_PORT:-55434}/capstone" --duration 300 "$@"
 
 # Generate API load for 5 minutes with 5% invalid requests; forward overrides.
 [positional-arguments]
