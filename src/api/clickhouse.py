@@ -1,7 +1,11 @@
 import asyncio
+import logging
 
 import httpx
 from fastapi import HTTPException
+
+
+LOG = logging.getLogger("uvicorn.error")
 
 
 class ClickHouse:
@@ -40,7 +44,12 @@ class ClickHouse:
                 )
                 response.raise_for_status()
                 return response.json()["data"]
-        except (httpx.HTTPError, TimeoutError, ValueError, KeyError):
+        except (httpx.HTTPError, TimeoutError, ValueError, KeyError) as error:
+            if isinstance(error, httpx.HTTPStatusError):
+                detail = f"HTTP {error.response.status_code}: {error.response.text[:1000]}"
+            else:
+                detail = f"{type(error).__name__}: {error}"
+            LOG.error("ClickHouse query failed: %s", detail)
             raise HTTPException(503, "ClickHouse unavailable") from None
         finally:
             self.gate.release()

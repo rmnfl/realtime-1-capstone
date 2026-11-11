@@ -28,8 +28,16 @@ class RedisCache:
         if value is None:
             CACHE_REQUESTS.labels(result="miss").inc()
             return None
-        cached = json.loads(value)
-        CACHE_REQUESTS.labels(result="hit" if cached is not None else "miss").inc()
+        try:
+            cached = json.loads(value)
+            if not isinstance(cached, dict):
+                raise ValueError("Cached response must be a JSON object")
+        except (ValueError, TypeError):
+            REDIS_ERRORS.labels(operation="decode").inc()
+            LOG.warning("Redis cache DECODE failed; continuing without cache")
+            CACHE_REQUESTS.labels(result="miss").inc()
+            return None
+        CACHE_REQUESTS.labels(result="hit").inc()
         return cached
 
     async def put(self, key: str, response: dict) -> None:
