@@ -1,4 +1,4 @@
-# Realtime-1 Capstone
+# NPL Realtime-1 Capstone
 
 [English](README.md) | **Русский**
 
@@ -64,8 +64,8 @@ Prometheus собирает метрики через встроенные эн�
 Если репозиторий уже скачан, перейдите в его каталог и пропустите `git clone`:
 
 ```sh
-git clone https://github.com/rmnfl/realtime-1-capstone.git
-cd realtime-1-capstone
+git clone https://github.com/rmnfl/npl-realtime1-capstone.git
+cd npl-realtime1-capstone
 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 lsof -nP -iTCP:55434 -iTCP:19093 -iTCP:28084 -iTCP:18133 -iTCP:18001 -iTCP:19005 -iTCP:13005 -sTCP:LISTEN
 ```
@@ -806,7 +806,7 @@ p50/p95/p99 времени ответа по эндпоинтам. Перцен�
 ## Структура проекта
 
 ```text
-realtime-1-capstone/
+npl-realtime1-capstone/
 ├── compose.yaml          # контейнеры и volumes данных
 ├── justfile              # запуск, диагностика и нагрузка
 ├── README.md / README.ru.md    # описание проекта на английском и русском

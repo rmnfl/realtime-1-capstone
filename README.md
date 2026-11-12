@@ -1,4 +1,4 @@
-# Realtime-1 Capstone
+# NPL Realtime-1 Capstone
 
 **English** | [Русский](README.ru.md)
 
@@ -65,8 +65,8 @@ Clone the repository and check for port conflicts.
 If you already have a checkout, open its directory and skip `git clone`:
 
 ```sh
-git clone https://github.com/rmnfl/realtime-1-capstone.git
-cd realtime-1-capstone
+git clone https://github.com/rmnfl/npl-realtime1-capstone.git
+cd npl-realtime1-capstone
 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 lsof -nP -iTCP:55434 -iTCP:19093 -iTCP:28084 -iTCP:18133 -iTCP:18001 -iTCP:19005 -iTCP:13005 -sTCP:LISTEN
 ```
@@ -802,7 +802,7 @@ validate business metric values. The API returns `422` for invalid parameters,
 ## Project structure
 
 ```text
-realtime-1-capstone/
+npl-realtime1-capstone/
 ├── README.md / README.ru.md    # project documentation in English and Russian
 ├── RUNBOOK.md / RUNBOOK.ru.md  # troubleshooting and recovery in both languages
 ├── compose.yaml          # containers and data volumes
