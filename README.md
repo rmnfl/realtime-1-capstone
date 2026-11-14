@@ -15,12 +15,10 @@ Kafka events to verify that duplicates leave the metrics unchanged.
 Built as part of the [NewProLab Realtime Analytics](https://newprolab.com/realtime-analytics) course.
 The PostgreSQL schema and data generator are adapted from the course materials.
 
-[Runbook](RUNBOOK.md)
+[Architecture](#architecture) · [Quick start](#quick-start) · [Runbook](RUNBOOK.md)
 
-Contents:
+Details:
 
-- [Architecture](#architecture)
-- [Quick start](#quick-start)
 - [Demo](#demo)
 - [Design decisions](#design-decisions)
 - [Data contract](#data-contract)
