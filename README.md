@@ -15,15 +15,18 @@ Kafka events to verify that duplicates leave the metrics unchanged.
 Built as part of the [NewProLab Realtime Analytics](https://newprolab.com/realtime-analytics) course.
 The PostgreSQL schema and data generator are adapted from the course materials.
 
-[Quick start](#quick-start) · [Demo](#demo) · [Runbook](RUNBOOK.md)
+[Runbook](RUNBOOK.md)
 
-Details:
+Contents:
 
-- [Verification results](#verification-results)
+- [Architecture](#architecture)
+- [Quick start](#quick-start)
+- [Demo](#demo)
+- [Design decisions](#design-decisions)
 - [Data contract](#data-contract)
 - [CDC](#cdc)
 - [ClickHouse](#clickhouse)
-- [API](#api-and-business-metrics)
+- [API and business metrics](#api-and-business-metrics)
 - [Redis](#redis)
 - [Monitoring](#monitoring)
 - [Load generators](#load-generators)
@@ -32,9 +35,9 @@ Details:
 
 ## Architecture
 
-![Architecture: source, CDC, analytics, API and monitoring](assets/architecture-excalidraw.png)
+![Architecture: source, CDC, analytics, API and monitoring](assets/architecture.png)
 
-[Editable Excalidraw diagram](assets/architecture-excalidraw.excalidraw).
+[Editable Excalidraw diagram](assets/architecture.excalidraw).
 
 Debezium runs in Kafka Connect. On its first connection, it takes a snapshot
 of the PostgreSQL tables, then reads the write-ahead log (WAL) and publishes
@@ -45,14 +48,7 @@ three summary responses in Redis for 30 seconds.
 
 Prometheus collects metrics from native service endpoints, JMX agents and
 exporters. Grafana uses Prometheus as its data source. Dashed lines show
-metrics collection. The data and API load generators are omitted from the diagram.
-
-![API under load: request rate, HTTP status codes and p50/p95/p99 latency](assets/api-dashboard.png)
-
-Part of the API dashboard during a load test. The generator is configured
-for 10 requests/s, with 5% invalid requests expected to return `422`.
-The charts show request rates by endpoint, HTTP status classes and
-p50/p95/p99 response times.
+metrics collection.
 
 ## Quick start
 
@@ -61,8 +57,7 @@ Docker image versions are specified in `compose.yaml` and the Dockerfile;
 Python dependencies are pinned in `uv.lock`. The first run downloads images,
 packages from PyPI and a JMX agent from GitHub.
 
-Clone the repository and check for port conflicts.
-If you already have a checkout, open its directory and skip `git clone`:
+Clone the repository and check for port conflicts:
 
 ```sh
 git clone https://github.com/rmnfl/npl-realtime1-capstone.git
@@ -79,6 +74,7 @@ The README examples use the default ports.
 just up
 just status
 just cdc-status
+just demo
 ```
 
 On an empty PostgreSQL volume, the first start runs
@@ -126,9 +122,7 @@ PostgreSQL skips its init scripts on an existing volume.
 separately. The monitoring view `pipeline_metrics` is the exception:
 it is updated with `CREATE OR REPLACE VIEW`.
 
-`just down` preserves the PostgreSQL, Kafka and ClickHouse volumes,
-including data and CDC offsets. `--volumes` deletes the environment's volumes;
-afterwards, use `just up` to initialise everything again.
+After deleting volumes, use `just up` to initialise everything again.
 The Redis cache is lost when its container is removed.
 
 For startup failures or changes that no longer reach the API, follow the
@@ -164,7 +158,6 @@ by status, the total value of paid orders and payment totals.
 Paid order totals and payment totals differ. Order `o8` was cancelled after
 a full refund; paid order `o6` has a partial refund of 4000 kopecks.
 
-This checks the load of records that existed before CDC started.
 To inspect the full API responses:
 
 ```sh
@@ -291,43 +284,18 @@ series and the payment total with `interval=total`. Summary requests use
 then exits with an error and prints the differences.
 The commands neither delete volumes nor reset offsets.
 
-## Verification results
-
-Checks were run on 11 November 2026.
-
-| Check | Result |
-|---|---|
-| Kafka event replay | Raw row counts increase; all five endpoint responses stay unchanged |
-| Older order version delivered after a newer one | The order keeps the status and amount from the newer version |
-| Redis failure | The API queries ClickHouse directly; caching resumes after Redis starts |
-| PostgreSQL, Kafka, Connect, ClickHouse, API and Redis stopped one at a time | After recovery, all five endpoint responses matched expected values derived from PostgreSQL |
-| Full restart with `just down` / `just start` | Data and offsets were preserved; no new snapshot was taken |
-| Nine alert rules | Every alert fired for the corresponding failure and cleared after recovery |
-
-In the Kafka failure test, processing did not resume within 45 seconds of
-restarting the broker, although the Connect task stayed `RUNNING`.
-After `just connect-restart`, changes reached the API.
-See the [runbook](RUNBOOK.md#after-recovery) for diagnosis and data reconciliation.
-
 ## Design decisions
 
-- PostgreSQL is the source of truth. The generator writes to the database,
-  and Debezium reads the WAL. The generator does not need to publish the same
-  changes to Kafka separately.
 - Raw tables retain every event received. Kafka coordinates identify the
   original message when investigating duplicates or ingestion delays.
 - `ReplacingMergeTree` removes superseded versions during background merges.
   Views read current tables with `FINAL` so that duplicates and older versions
   are excluded before merges finish. Orders use `version`; line items use LSN.
   Payments are immutable, so their operation key is sufficient for deduplication.
-- Redis caches the three summaries for 30 seconds. When Redis is unavailable,
-  the API queries ClickHouse directly. Time series are not cached.
-- Service availability and data processing are checked separately. With an
-  ingestion MV detached, all services passed health checks, but new orders
-  did not reach the API. The consumer lag alert detected the stalled processing.
-- Zero lag means the consumer has caught up with Kafka. A source change may
-  still be waiting in Debezium. The control scenario therefore starts with
-  a PostgreSQL write and ends by checking the API response.
+- Service availability and data freshness are checked separately. A successful
+  health check and zero consumer lag do not confirm that the latest PostgreSQL
+  change has reached the API. The control scenario therefore starts with
+  a source write and ends by checking the API response.
 
 ## Data contract
 
@@ -420,9 +388,9 @@ across partitions or topics.
 
 ## ClickHouse
 
-![ClickHouse: deduplication and latest-version selection](assets/clickhouse-excalidraw.png)
+![ClickHouse: deduplication and latest-version selection](assets/clickhouse-deduplication.png)
 
-[Editable Excalidraw diagram](assets/clickhouse-excalidraw.excalidraw).
+[Editable Excalidraw diagram](assets/clickhouse-deduplication.excalidraw).
 
 MVs process new inserts. The `*_latest` views run at SELECT time.
 Each of `orders`, `order_items` and `payments` has its own chain of tables
@@ -702,6 +670,13 @@ and `redis_up`. Prometheus and Grafana's own metrics are not collected.
 The Prometheus data source and dashboards are provisioned automatically
 when [Grafana](http://localhost:13005) starts. No manual UI setup is required.
 
+![API under load: request rate, HTTP status codes and p50/p95/p99 latency](assets/api-dashboard.png)
+
+Part of the API dashboard during a load test. The generator is configured
+for 10 requests/s, with 5% invalid requests expected to return `422`.
+The charts show request rates by endpoint, HTTP status classes and
+p50/p95/p99 response times.
+
 ### Alerts
 
 Rules are in [alerts.yml](monitoring/alerts.yml). An alert enters `Firing`
@@ -795,8 +770,7 @@ for in-flight requests; each has a 10-second timeout.
 The report includes HTTP status codes, expected and unexpected responses,
 network errors, and p50/p95/p99 response times by endpoint. Percentiles are
 measured on the client and include error responses. The generator does not
-validate business metric values. The API returns `422` for invalid parameters,
-`429` on overload and `503` for ClickHouse errors.
+validate business metric values.
 `ApiErrors` responds to 5xx; intentional `422` responses do not trigger it.
 
 ## Project structure
@@ -828,13 +802,6 @@ npl-realtime1-capstone/
     ├── clickhouse/       # ClickHouse and ingestion latency metrics
     └── grafana/          # dashboards and provisioning
 ```
-
-`src/` contains SQL scripts, Debezium settings, the API and load generators.
-`monitoring/` contains Prometheus, exporter and Grafana configuration,
-alert rules and dashboard JSON files. `compose.yaml` defines services,
-the network and volumes; `justfile` contains startup and maintenance commands.
-English documentation is in `README.md` and `RUNBOOK.md`; Russian versions
-are in `README.ru.md` and `RUNBOOK.ru.md`.
 
 ## Limitations
 
